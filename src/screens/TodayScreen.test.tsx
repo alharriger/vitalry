@@ -27,8 +27,8 @@ describe('TodayScreen', () => {
     expect(endDone).toBe(startDone + 1);
   });
 
-  it('shows the grace-window hint', () => {
+  it('shows the grace-window rule', () => {
     render(<TodayScreen />);
-    expect(screen.getByText(/still editable until midnight/i)).toBeInTheDocument();
+    expect(screen.getByText(/editable until midnight/i)).toBeInTheDocument();
   });
 });

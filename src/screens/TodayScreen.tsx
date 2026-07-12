@@ -58,9 +58,11 @@ export function TodayScreen() {
         </div>
       </div>
 
+      {/* Phase 0: describe the grace-window rule, don't imply you can tap to reach
+          yesterday yet — that navigation is built in Phase 2. */}
       <div className="today__grace">
         <i className="ph-bold ph-clock-countdown" aria-hidden="true" />
-        Yesterday is still editable until midnight
+        Grace window: yesterday stays editable until midnight
       </div>
 
       <div className="today__goals">

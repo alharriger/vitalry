@@ -46,7 +46,7 @@ user has approved. Ordering follows the handoff §7.
 |---|---|---|
 | **0 — Scaffold** | Vite + React + TS + PWA plugin; design tokens + fonts + Phosphor wired; routing shell (4 tabs + flow routes); port core components Today needs | App runs on a phone-width viewport with styled tab shell; tokens resolve; user approves look |
 | **1 — Backend & auth** | Supabase project; schema from plan §10; seed Daily 9; RLS scoped to group membership; magic-link/invite auth | A test user can sign in via magic link; RLS verified (user A cannot read group B) |
-| **2 — Today + scoring engine** | Today screen on live `daily_logs`; scoring as a pure, fully-tested module (base/perfect/active/streak/cap/grace); rules snapshot per competition; optimistic taps | Scoring suite green incl. edge cases (streak reset, cap, grace lock, local midnight); real check-in < 20s on a phone |
+| **2 — Today + scoring engine** | Today screen on live `daily_logs`; scoring as a pure, fully-tested module (base/perfect/active/streak/cap/grace); rules snapshot per competition; **optimistic taps auto-saved to Supabase with a visible "saved" indicator** (no manual Save button — see UX note below); **yesterday reachable + editable within the grace window** (the "still editable until midnight" affordance made real) | Scoring suite green incl. edge cases (streak reset, cap, grace lock, local midnight); real check-in < 20s on a phone; tap → reload → state persists; yesterday editable within grace, locked after |
 | **3 — Leaderboard + breakdown** | Realtime ranking, today-progress pips, tap-through day breakdown, days-remaining + prize header | Two devices see each other's taps live; breakdown math matches engine exactly |
 | **4 — Setup + onboarding + invites** | Organizer creates competition → invite link; join flow: name/avatar/how-it-works/add-to-home-screen/reminders | A brand-new person joins from a text-message link in < 2 min, no help |
 | **5 — Progress, Group, Results** | Personal heatmap + per-goal rates; group home + "run it back"; finale celebration + superlatives | Full competition lifecycle works end-to-end incl. finished-competition results |
@@ -65,7 +65,12 @@ v3 real stakes (validate first; legal review required).
 - As an **organizer**, I create a group and competition (name, 7/14/30, start date, prize
   text) and get an invite link I can drop in a family text thread.
 - As a **parent**, I open one obvious screen and tap the goals I did today in under 20 s.
-- As a **parent**, I can still fix yesterday if I forgot to log (grace window).
+- As a **parent**, I can **trust my taps are saved** — I see clear "saved" feedback and my
+  check-ins are still there when I reopen the app, without hunting for a Save button.
+  *(From Amber's Phase 0 test: reload reset progress and there was no reassurance it saved.)*
+- As a **parent**, I can still fix yesterday if I forgot to log — and I can **actually get to
+  yesterday** from Today while the grace window is open. *(Phase 0 showed the "still editable
+  until midnight" hint with no way to reach yesterday.)*
 - As a **player**, I see the leaderboard update live and can tap anyone to audit exactly how
   every point was earned.
 - As a **competitive sibling**, I earn streak and perfect-day bonuses and can verify the math.
@@ -73,6 +78,25 @@ v3 real stakes (validate first; legal review required).
   comparison.
 - As a **player**, I get a reminder at my chosen time (push, or email fallback).
 - As a **group**, we see a finale celebration with superlatives and can "run it back."
+
+## UX note — "saved" reassurance vs. a manual Save button (Phase 2)
+
+Amber's Phase 0 test surfaced a real need: a parent taps their goals and wants to *feel* their
+progress is safe. A literal **Save button** is the intuitive fix but works against two core
+commitments: Principle 2 ("logging is a tap, never a chore — no forms, no extra steps") and the
+plan's "optimistic tap logging." Worse, a manual save adds a new failure mode — tap everything,
+forget to save, lose it — which hits the forgetful-parent persona hardest, the exact person the
+grace window exists to protect.
+
+**Recommendation (needs Amber's ok on the exact mechanism):** every tap auto-saves optimistically
+to Supabase, paired with a small, always-visible **saved indicator** (e.g. an "All saved ✓" /
+syncing affordance near the day score, plus a gentle per-tap confirmation). This delivers the
+*feeling* of saving — the actual goal — with zero chore and no forgot-to-save risk, the modern
+autosave pattern. If Amber still wants an explicit button after seeing it, that's her call
+(logged under Human-owned decisions).
+
+The Phase 0 reload-reset that prompted this is **not** a design flaw — it's simply the scaffold
+having no backend yet. Persistence lands with Phase 2.
 
 ## Out of scope for v1 (do not design for by accident)
 
@@ -96,5 +120,8 @@ durations · raw-stat comparisons (**permanent**) · chat/comments · photo proo
   tooling; free tiers wherever quality allows. Architecture must honor this.
 
 **Still open:**
+- [ ] **Save affordance (Phase 2):** autosave + visible "saved" indicator (recommended) vs.
+      an explicit Save button. See the UX note above; decide once Amber sees the indicator in
+      Phase 2. Raised from her Phase 0 test.
 - [ ] **Leaderboard detail of others:** counts + tap-through breakdown (recommended) vs
       broadcasting individual goals. Decide during Phase 3 design.
