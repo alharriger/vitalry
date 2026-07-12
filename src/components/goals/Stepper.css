@@ -1,0 +1,31 @@
+.vt-stepper { --_c: var(--evergreen); display: inline-flex; align-items: center; gap: 8px; }
+.vt-stepper__btn {
+  appearance: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid var(--_c);
+  background: transparent;
+  color: var(--_c);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out);
+}
+.vt-stepper__btn:hover { background: color-mix(in srgb, var(--_c) 12%, transparent); }
+.vt-stepper__btn:active { transform: scale(0.88); }
+.vt-stepper__btn:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.vt-stepper__btn .ph, .vt-stepper__btn [class*="ph-"] { font-size: 21px; }
+.vt-stepper__btn:disabled { opacity: 0.32; cursor: not-allowed; }
+.vt-stepper__val {
+  min-width: 46px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-xl);
+  color: var(--text-primary);
+  line-height: 1;
+}
+.vt-stepper__val small {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-weight: var(--fw-bold);
+}

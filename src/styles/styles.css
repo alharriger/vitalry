@@ -1,0 +1,13 @@
+/* ==========================================================================
+   Vitalry Design System — global entry point.
+   Import THIS one file. It is a manifest of @import lines only; never add
+   rules here directly. Fonts are self-hosted (see fonts.css); all other
+   tokens are ported verbatim from design_handoff_vitalry_v1/design-system.
+   ========================================================================== */
+
+@import url('./fonts.css');
+@import url('./tokens/colors.css');
+@import url('./tokens/typography.css');
+@import url('./tokens/spacing.css');
+@import url('./tokens/effects.css');
+@import url('./tokens/base.css');

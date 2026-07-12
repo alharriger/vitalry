@@ -1,0 +1,74 @@
+.vt-goal {
+  --_c: var(--green-600);
+  width: 100%;
+  background: var(--surface-card);
+  border: var(--border-thin) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
+  box-sizing: border-box;
+}
+.vt-goal--tappable { cursor: pointer; appearance: none; font: inherit; color: inherit; text-align: left; display: block; }
+.vt-goal--tappable:active { transform: scale(0.99); }
+.vt-goal--tappable:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.vt-goal--done {
+  background: color-mix(in srgb, var(--_c) 9%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--_c) 45%, transparent);
+}
+.vt-goal__top { display: flex; align-items: center; gap: var(--space-3); min-height: 46px; }
+.vt-goal__disc {
+  flex: none;
+  width: 46px; height: 46px;
+  border-radius: var(--radius-md);
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--_c) 15%, transparent);
+  color: var(--_c);
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+.vt-goal__disc .ph, .vt-goal__disc [class*="ph-"] { font-size: 26px; line-height: 1; }
+.vt-goal--done .vt-goal__disc { background: var(--_c); color: #fff; }
+.vt-goal__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.vt-goal__name {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vt-goal__target {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vt-goal__check {
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  border: 2.5px solid var(--border-strong);
+  background: transparent;
+  color: transparent;
+  transition: all var(--dur-base) var(--ease-spring);
+}
+.vt-goal__check .ph, .vt-goal__check [class*="ph-"] { font-size: 24px; }
+.vt-goal--done .vt-goal__check { border-color: var(--_c); background: var(--_c); color: #fff; }
+.vt-goal__control { flex: none; display: flex; align-items: center; }
+
+/* Compact the trailing counter control so counter rows match the height of
+   simple check rows and the title never wraps. */
+.vt-goal__control .vt-stepper { gap: 5px; }
+.vt-goal__control .vt-stepper__btn { width: 36px; height: 36px; border-width: 2px; }
+.vt-goal__control .vt-stepper__btn .ph, .vt-goal__control .vt-stepper__btn [class*="ph-"] { font-size: 18px; }
+.vt-goal__control .vt-stepper__val { min-width: 30px; font-size: var(--text-lg); }
+.vt-goal__control .vt-stepper__val small { font-size: var(--text-xs); }

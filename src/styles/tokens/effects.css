@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Vitalry — Effects: radius, borders, shadows, motion
+   Friendly & rounded (game feel). Soft, warm, low-spread shadows on a warm
+   ink base — never cold gray. Motion is springy and celebratory (unlike the
+   author's calmer rehab app) but always fast enough to feel instant.
+   ========================================================================== */
+
+:root {
+  /* ---- Corner radius (rounded, playful) ---------------------------------- */
+  --radius-xs:   8px;
+  --radius-sm:   12px;    /* chips, tags, small buttons */
+  --radius-md:   16px;    /* inputs, medium buttons */
+  --radius-lg:   20px;    /* cards, goal rows */
+  --radius-xl:   26px;    /* feature cards, sheets */
+  --radius-2xl:  32px;    /* hero / celebration cards */
+  --radius-pill: 999px;   /* pills, avatars, toggles */
+
+  /* ---- Border widths ----------------------------------------------------- */
+  --border-hair: 1px;
+  --border-thin: 1.5px;
+  --border-thick: 2px;
+
+  /* ---- Shadows (warm ink, soft) ------------------------------------------ */
+  --shadow-xs: 0 1px 2px rgba(42, 38, 32, 0.06);
+  --shadow-sm: 0 2px 6px rgba(42, 38, 32, 0.07);
+  --shadow-md: 0 6px 16px rgba(42, 38, 32, 0.09);
+  --shadow-lg: 0 14px 34px rgba(42, 38, 32, 0.13);
+  --shadow-xl: 0 22px 52px rgba(42, 38, 32, 0.18);
+
+  /* Playful "sticker" shadow for celebratory chips / active dots */
+  --shadow-pop: 0 4px 0 rgba(42, 38, 32, 0.12);
+
+  /* ---- Motion ------------------------------------------------------------ */
+  /* gentle overshoot on --ease-spring */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);       /* @kind other */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);    /* @kind other */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);       /* @kind other */
+
+  /* taps=fast, transitions=base, sheets/celebration=slow */
+  --dur-fast:   120ms;   /* @kind other */
+  --dur-base:   220ms;   /* @kind other */
+  --dur-slow:   340ms;   /* @kind other */
+
+  /* Press affordance: buttons & taps shrink slightly */
+  --press-scale: 0.96;   /* @kind other */
+}

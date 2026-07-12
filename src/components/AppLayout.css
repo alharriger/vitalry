@@ -1,0 +1,25 @@
+/* App frame: a centered mobile-width column, installed-to-home-screen feel.
+   The screen area scrolls; the tab bar is pinned to the bottom of the frame. */
+.vt-app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--screen-max);
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--surface-app);
+  /* Hairline edges on wide (desktop) viewports; invisible at phone width. */
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+.vt-app__screen {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--screen-pad);
+  /* Leave room so content never hides behind the pinned tab bar. */
+  padding-bottom: calc(var(--tabbar-h) + var(--space-6));
+}
+.vt-app__tabbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}

@@ -1,0 +1,23 @@
+.vt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-sm);
+  line-height: 1;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  --_bg: var(--surface-sunken);
+  --_fg: var(--text-secondary);
+  background: var(--_bg);
+  color: var(--_fg);
+}
+.vt-badge--solid  { background: var(--_solid, var(--green-600)); color: #fff; }
+.vt-badge--tint   { background: color-mix(in srgb, var(--_solid, var(--green-500)) 16%, transparent); color: var(--_solid, var(--green-700)); }
+.vt-badge--outline{ background: transparent; color: var(--_solid, var(--green-700)); box-shadow: inset 0 0 0 1.5px var(--_solid, var(--green-500)); }
+.vt-badge--sm { font-size: var(--text-xs); padding: 4px 9px; }
+.vt-badge--lg { font-size: var(--text-base); padding: 8px 15px; }
+.vt-badge .ph, .vt-badge [class*="ph-"] { font-size: 1.15em; }
+.vt-badge__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--_solid, currentColor); }

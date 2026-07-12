@@ -39,7 +39,21 @@ symbols are Phosphor glyphs, not emoji. Plain language, zero jargon.
 
 ## Production TODOs from the handoff
 
-- [ ] Self-host Bricolage Grotesque + Hanken Grotesk woff2 (currently Google Fonts CDN) — needed for offline/PWA.
-- [ ] Vendor Phosphor icons locally (currently unpkg CDN).
+- [x] Self-host Bricolage Grotesque + Hanken Grotesk woff2 — done in Phase 0
+      (`src/assets/fonts/`, latin + latin-ext, wired via `src/styles/fonts.css`). No CDN.
+- [x] Vendor Phosphor icons locally — done in Phase 0 (`@phosphor-icons/web` via npm,
+      bundled by Vite). No CDN.
 - [x] Type pairing (Bricolage Grotesque + Hanken Grotesk) and evergreen palette confirmed by
       Amber 2026-07-12 — locked. Product name: **Vitalry**.
+- [ ] Phosphor ships ttf/woff/svg fallbacks Vite still emits (~6MB, unused — browsers use
+      woff2). They are excluded from the PWA precache. Trim the @font-face to woff2-only in
+      Phase 6 so they aren't emitted at all.
+
+## How the design system lives in the app (Phase 0)
+
+- Tokens are copied verbatim to `src/styles/tokens/`; entry point `src/styles/styles.css`
+  imports fonts + tokens. Import that one file (done in `src/main.tsx`).
+- Components are ported to typed React under `src/components/` (`ui/` core + `goals/`
+  signature), each with a co-located `.css` file (the design system's runtime
+  style-injection pattern was converted to idiomatic Vite CSS imports). Barrel:
+  `src/components/index.ts`.
