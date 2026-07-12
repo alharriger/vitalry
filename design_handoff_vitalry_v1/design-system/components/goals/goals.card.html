@@ -1,0 +1,56 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Goals — Check-in Building Blocks" subtitle="GoalRow, Stepper, StreakFlame, DayScore" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--surface-app); padding: 24px; color: var(--text-primary); }
+  .sec { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: var(--ls-caps); color: var(--text-muted); margin: 18px 0 10px; }
+  .sec:first-child { margin-top: 0; }
+  .wrap { max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+  .center { display: flex; align-items: center; gap: 24px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel">
+const { GoalRow, Stepper, StreakFlame, DayScore } = window.VitalryDesignSystem_cc3bad;
+function Demo() {
+  const [air, setAir] = React.useState(true);
+  const [sleep, setSleep] = React.useState(false);
+  const [colors, setColors] = React.useState(3);
+  const [cups, setCups] = React.useState(5);
+  return (
+    <div className="wrap">
+      <div className="sec">Goal rows — tap to complete</div>
+      <GoalRow name="Fresh air" target="20 min outside" icon="ph-bold ph-sun" color="var(--goal-air)" done={air} onToggle={() => setAir(!air)} />
+      <GoalRow name="Sleep" target="7+ hours" icon="ph-bold ph-moon" color="var(--goal-sleep)" done={sleep} onToggle={() => setSleep(!sleep)} />
+
+      <div className="sec">Counter goals — −/+ stepper</div>
+      <GoalRow name="Eat the rainbow" target="5 produce colors" icon="ph-bold ph-rainbow" color="var(--goal-rainbow)" done={colors >= 5} interactive={false}>
+        <Stepper value={colors} max={5} color="var(--goal-rainbow)" onChange={setColors} />
+      </GoalRow>
+      <GoalRow name="Water" target="8 cups" icon="ph-bold ph-drop" color="var(--goal-water)" done={cups >= 8} interactive={false}>
+        <Stepper value={cups} max={8} color="var(--goal-water)" onChange={setCups} />
+      </GoalRow>
+
+      <div className="sec">Streak &amp; day score</div>
+      <div className="center">
+        <StreakFlame count={12} size="lg" showLabel />
+        <DayScore done={6} total={9} points={7} size={132} thickness={12} />
+        <DayScore done={9} total={9} points={17} size={132} thickness={12} />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

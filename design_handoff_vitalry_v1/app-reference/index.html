@@ -1,0 +1,101 @@
+<!-- @dsCard group="Fit Friends & Fam" viewport="414x820" name="Fit Friends & Fam — Mobile App" subtitle="Interactive check-in, standings, progress, group & finale" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fit Friends &amp; Fam</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: #E7E0D2; font-family: var(--font-body); display: grid; place-items: center; padding: 20px; box-sizing: border-box; }
+  .phone {
+    position: relative;
+    width: 414px;
+    height: 812px;
+    max-height: calc(100vh - 40px);
+    background: var(--surface-app);
+    border-radius: 44px;
+    box-shadow: 0 30px 80px rgba(42,38,32,0.28), inset 0 0 0 10px #1c1a17, inset 0 0 0 12px #3a352c;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 14px 30px 6px; font-weight: 800; font-size: 14px; color: var(--text-primary); flex: none; }
+  .statusbar .icons { display: flex; gap: 6px; font-size: 15px; }
+  .scroll { flex: 1; overflow-y: auto; padding: 6px var(--screen-pad) 0; -webkit-overflow-scrolling: touch; }
+  .scroll::-webkit-scrollbar { width: 0; }
+  .tabwrap { flex: none; }
+  @keyframes vt-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes vt-rise { from { transform: translateY(40px); } to { transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script src="data.js"></script>
+<script type="text/babel" src="TodayScreen.jsx"></script>
+<script type="text/babel" src="StandingsScreen.jsx"></script>
+<script type="text/babel" src="ProgressScreen.jsx"></script>
+<script type="text/babel" src="GroupScreen.jsx"></script>
+<script type="text/babel" src="ResultsScreen.jsx"></script>
+<script type="text/babel" src="SetupScreen.jsx"></script>
+<script type="text/babel">
+const { TabBar } = window.VitalryDesignSystem_cc3bad;
+
+function App() {
+  const [tab, setTab] = React.useState('today');
+  const [overlay, setOverlay] = React.useState(null); // 'results' | 'setup'
+  const [today, setToday] = React.useState(window.VITAL_DATA.todayState);
+  const scrollRef = React.useRef(null);
+
+  React.useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [tab]);
+
+  const goalsDone = (() => {
+    const d = window.VITAL_DATA.goals.filter((g) => {
+      if (g.type === 'dots') return today.rainbow >= 5;
+      if (g.type === 'glasses') return today.water >= 8;
+      return !!today[g.key];
+    }).length;
+    return d;
+  })();
+  const checkinComplete = goalsDone >= 6;
+
+  let screen;
+  if (tab === 'today') screen = <window.TodayScreen state={today} setState={setToday} />;
+  else if (tab === 'leaderboard') screen = <window.StandingsScreen />;
+  else if (tab === 'progress') screen = <window.ProgressScreen />;
+  else screen = <window.GroupScreen onRunItBack={() => setOverlay('setup')} onViewResults={() => setOverlay('results')} />;
+
+  return (
+    <div className="phone">
+      <div className="statusbar">
+        <span>8:04</span>
+        <span className="icons"><i className="ph-fill ph-cell-signal-full" aria-hidden="true" /><i className="ph-fill ph-wifi-high" aria-hidden="true" /><i className="ph-fill ph-battery-high" aria-hidden="true" /></span>
+      </div>
+      <div className="scroll" ref={scrollRef}>
+        {screen}
+      </div>
+      <div className="tabwrap">
+        <TabBar active={tab} onChange={setTab} items={[
+          { key: 'today', label: 'Today', icon: 'ph-bold ph-house', dot: !checkinComplete },
+          { key: 'leaderboard', label: 'Standings', icon: 'ph-bold ph-ranking' },
+          { key: 'progress', label: 'Progress', icon: 'ph-bold ph-chart-line-up' },
+          { key: 'group', label: 'Group', icon: 'ph-bold ph-users-three' },
+        ]} />
+      </div>
+
+      {overlay === 'results' && <window.ResultsScreen onClose={() => setOverlay(null)} onRunItBack={() => setOverlay('setup')} />}
+      {overlay === 'setup' && <window.SetupScreen onClose={() => setOverlay(null)} onLaunch={() => { setOverlay(null); setTab('today'); }} />}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

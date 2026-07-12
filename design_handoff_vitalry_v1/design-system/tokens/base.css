@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Vitalry — Base layer
+   Light, opt-in resets + friendly document defaults. Kept minimal so the
+   design system stays a token/component library, not an opinionated CSS
+   framework. Link colors are defined here so consumer content never falls
+   back to browser-default blue.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-app);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--lh-normal);
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  letter-spacing: var(--ls-tight);
+  line-height: var(--lh-snug);
+  margin: 0;
+}
+
+/* Links — warm green, never browser blue */
+a {
+  color: var(--green-700);
+  text-decoration: none;
+  font-weight: var(--fw-bold);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+a:hover {
+  color: var(--green-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Keyboard focus — visible warm-green ring everywhere */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+::selection {
+  background: var(--green-100);
+  color: var(--green-700);
+}
