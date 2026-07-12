@@ -1,0 +1,42 @@
+.vt-tabbar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: stretch;
+  background: var(--surface-card);
+  border-top: var(--border-hair) solid var(--border-subtle);
+  padding: 6px max(var(--space-2), env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+  height: var(--tabbar-h);
+}
+.vt-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-md);
+  position: relative;
+  transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-spring);
+}
+.vt-tab:active { transform: scale(0.94); }
+.vt-tab .ph, .vt-tab [class*="ph-"] { font-size: 25px; line-height: 1; }
+.vt-tab[aria-current="page"] { color: var(--evergreen); }
+.vt-tab:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -2px; }
+.vt-tab__dot {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  margin-left: 8px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--green-500);
+  box-shadow: 0 0 0 2px var(--surface-card);
+}

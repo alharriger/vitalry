@@ -1,0 +1,35 @@
+/* ==========================================================================
+   Vitalry — Spacing & sizing tokens
+   4px base grid (matches author convention). Generous by default: this is a
+   one-handed phone app with large touch targets for all ages.
+   ========================================================================== */
+
+:root {
+  /* ---- Spacing scale ----------------------------------------------------- */
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;   /* standard card padding */
+  --space-6:   24px;   /* section spacing */
+  --space-8:   32px;   /* between major sections */
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+
+  /* ---- Screen layout ----------------------------------------------------- */
+  --screen-pad:     20px;   /* horizontal gutter on main screens */
+  --screen-max:     440px;  /* mobile-first design width cap */
+  --tabbar-h:       68px;   /* bottom tab bar height */
+
+  /* ---- Touch targets (accessibility floor = 44px) ------------------------ */
+  --tap-min:   44px;
+  --tap-md:    52px;   /* standard primary button height */
+  --tap-lg:    60px;   /* Daily-9 goal rows — easy to hit one-handed */
+
+  /* ---- Control heights --------------------------------------------------- */
+  --control-sm: 36px;
+  --control-md: 48px;
+  --control-lg: 52px;
+}

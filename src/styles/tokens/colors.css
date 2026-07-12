@@ -1,0 +1,103 @@
+/* ==========================================================================
+   Vitalry — Color tokens
+   A warm, playful, family-game palette. The veggie "eat-the-rainbow" colors
+   and the nine goal-category hues are FIRST-CLASS tokens (color is content).
+   All text/surface pairings target WCAG AA.
+   ========================================================================== */
+
+:root {
+  /* ---- Warm neutral ramp (cream → warm ink) ------------------------------ */
+  --cream-50:  #FCF9F3;   /* app background */
+  --cream-100: #F6F0E4;   /* subtle raised warm */
+  --cream-200: #EDE4D3;   /* sunken surfaces / tracks */
+  --sand-300:  #E2D7C1;   /* subtle borders / dividers */
+  --sand-400:  #CBBB9E;   /* stronger borders */
+  --white:     #FFFFFF;   /* card surface */
+
+  --ink-900:   #2A2620;   /* primary text (warm near-black) */
+  --ink-700:   #514A3C;   /* strong body */
+  --ink-600:   #6B6353;   /* secondary text */
+  --ink-400:   #9A8F79;   /* muted / disabled text */
+
+  /* ---- Brand greens — evergreen anchor + a full living-green family ------ */
+  --evergreen:      #0F4D2E;   /* deep brand anchor — PRIMARY actions & emphasis */
+  --evergreen-dark: #0A3A22;   /* pressed */
+  --green-700: #14663A;   /* deep accent */
+  --green-600: #1E8049;
+  --green-500: #2FA05C;   /* success fills */
+  --green-400: #52BC7C;   /* bright highlight */
+  --sage-500:  #6FA588;   /* muted secondary green (branding range) */
+  --mint-200:  #CDEBD6;   /* soft green tint */
+  --green-100: #DCF0E1;   /* lightest tint */
+  --green-300: #86CE9C;
+
+  /* ---- Avatar palette — original, refined, NOT the primary rainbow ------- */
+  --avatar-clay:     #C2683D;   /* @kind color */
+  --avatar-pine:     #3E8E7E;   /* @kind color */
+  --avatar-plum:     #8E5A9E;   /* @kind color */
+  --avatar-ochre:    #C99A2E;   /* @kind color */
+  --avatar-denim:    #5B7DB1;   /* @kind color */
+  --avatar-mulberry: #A0506A;   /* @kind color */
+  --avatar-olive:    #6B8E4E;   /* @kind color */
+  --avatar-lagoon:   #4C8C9E;   /* @kind color */
+
+  /* ---- Energy — streak flame & perfect-day gold -------------------------- */
+  --flame-400: #F98A3C;
+  --flame-500: #F1682E;   /* streak flame */
+  --flame-600: #D64F1A;
+  --sun-100:   #FDEFC9;
+  --sun-400:   #F7B32B;   /* perfect-day gold / celebration */
+
+  /* ---- Eat-the-rainbow (the 5 check-in dots) ----------------------------- */
+  --rainbow-red:    #E4462E;   /* red produce */
+  --rainbow-orange: #F2932B;   /* orange / yellow produce */
+  --rainbow-green:  #56A93C;   /* green produce */
+  --rainbow-purple: #8B54C6;   /* blue / purple produce */
+  --rainbow-white:  #FFFFFF;   /* white / other (rendered outlined) */
+
+  /* ---- Daily-9 goal category hues (distinct & harmonious) ---------------- */
+  --goal-rainbow:  #E4462E;   /* Eat the rainbow (also shown as gradient) */
+  --goal-protein:  #E0554C;   /* Protein */
+  --goal-fiber:    #B9822B;   /* Fiber */
+  --goal-move:     #EC8A2E;   /* Move (walk) */
+  --goal-sweat:    #DA3F76;   /* Sweat or strength */
+  --goal-air:      #3FA8C4;   /* Fresh air */
+  --goal-water:    #2E8BD6;   /* Water */
+  --goal-sleep:    #5E5AC8;   /* Sleep */
+  --goal-mind:     #9B59B6;   /* Mind */
+
+  /* ---- Semantic status --------------------------------------------------- */
+  --success: #2FA05C;
+  --warning: #E0912B;
+  --danger:  #D8483B;   /* used gently — never to shame a miss */
+  --info:    #2E8BD6;
+
+  /* =========================================================================
+     Semantic aliases — reference THESE in components, not the raw ramps.
+     ======================================================================= */
+  --surface-app:     var(--cream-50);
+  --surface-card:    var(--white);
+  --surface-raised:  var(--white);
+  --surface-sunken:  var(--cream-200);
+  --surface-tint:    var(--cream-100);
+
+  --text-primary:    var(--ink-900);
+  --text-secondary:  var(--ink-600);
+  --text-muted:      var(--ink-400);
+  --text-inverse:    var(--cream-50);
+  --text-accent:     var(--evergreen);
+
+  --border-subtle:   var(--sand-300);
+  --border-strong:   var(--sand-400);
+  --border-focus:    var(--green-500);
+
+  --accent:          var(--evergreen);
+  --accent-hover:    var(--evergreen-dark);
+  --accent-tint:     var(--mint-200);
+
+  --streak:          var(--flame-500);
+  --gold:            var(--sun-400);
+
+  --focus-ring:      color-mix(in srgb, var(--green-500) 55%, transparent);
+  --scrim:           color-mix(in srgb, var(--ink-900) 45%, transparent);
+}

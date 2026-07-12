@@ -1,0 +1,50 @@
+/* ==========================================================================
+   Vitalry — Typography tokens
+   Bricolage Grotesque = display / scores / headings (characterful, premium).
+   Hanken Grotesk      = body & UI (warm, highly legible, accessible).
+   Base body ≥ 17px for readability on phones and for older users.
+   ========================================================================== */
+
+:root {
+  /* ---- Families ---------------------------------------------------------- */
+  --font-display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body:    'Hanken Grotesk', -apple-system, 'Segoe UI', system-ui, sans-serif;
+
+  /* ---- Weights ----------------------------------------------------------- */
+  --fw-regular:  400;  /* @kind font */
+  --fw-semibold: 600;  /* @kind font */
+  --fw-bold:     700;  /* @kind font */
+  --fw-extra:    800;  /* @kind font */
+  --fw-black:    900;  /* @kind font */
+
+  /* ---- Type scale (px) --------------------------------------------------- */
+  --text-xs:      13px;   /* metadata / timestamps — sparingly */
+  --text-sm:      15px;   /* captions, secondary labels */
+  --text-base:    17px;   /* body default */
+  --text-lg:      19px;   /* lead paragraph / important body */
+  --text-xl:      22px;   /* card titles (H3) */
+  --text-2xl:     26px;   /* section headers (H2) */
+  --text-3xl:     32px;   /* screen titles (H1) */
+  --text-4xl:     40px;   /* display */
+  --text-score:   56px;   /* daily-score / celebration numerals */
+  --text-hero:    72px;   /* finale winner numerals */
+
+  /* ---- Line heights ------------------------------------------------------ */
+  --lh-tight:   1.1;   /* @kind font */
+  --lh-snug:    1.25;  /* @kind font */
+  --lh-normal:  1.45;  /* @kind font */
+  --lh-relaxed: 1.6;   /* @kind font */
+
+  /* ---- Letter spacing ---------------------------------------------------- */
+  --ls-tight:   -0.02em;  /* @kind font */
+  --ls-normal:  0;        /* @kind font */
+  --ls-wide:    0.02em;   /* @kind font */
+  /* --ls-caps: uppercase eyebrows / small labels */
+  --ls-caps:    0.06em;   /* @kind font */
+
+  /* ---- Semantic text roles (font + size + weight bundles are applied
+          in component CSS; these expose the common building blocks) -------- */
+  --text-body:       var(--text-base);
+  --text-body-lg:    var(--text-lg);
+  --text-caption:    var(--text-sm);
+}
