@@ -15,6 +15,18 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
 
 ---
 
+## Faithfully ported a design-handoff value that broke a hard rule (44px floor)
+- **What happened:** The Stepper's −/+ buttons were ported at 40px (and shrunk to 36px when
+  nested in a GoalRow) — below the project's hard 44px touch-target floor — because the
+  design handoff's Stepper CSS itself used 40px. Caught by the code-review merge gate.
+- **Root cause:** Treated the design reference as authoritative on a dimension governed by a
+  non-negotiable accessibility rule, and the handoff was internally inconsistent (its CSS said
+  40px; its own usage doc said 48px).
+- **Prevention rule:** The design handoff is authoritative on look/feel, NOT on the hard
+  rules in CLAUDE.md (44px targets, WCAG AA, ≥16px body). When porting, check every
+  interactive element against the accessibility floor and let the rule win over the reference.
+- **Status:** Active
+
 ## Affordance copy shown for a non-existent feature (grace-window hint)
 - **What happened:** The Phase 0 Today screen shows "Yesterday is still editable until
   midnight," but there is no way to reach yesterday — it's a static hint with no backing
