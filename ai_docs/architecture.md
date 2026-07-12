@@ -54,6 +54,16 @@ daily_logs     (id, competition_id, user_id, local_date,
 - **Group size unbounded in the model**, UI tuned for 4–12.
 - **RLS everywhere:** every table row-level-secured, scoped to group membership.
 
+## Security gates carried into later phases
+
+- **Phase 1 (backend lands):** the PWA service worker already denies
+  `navigateFallback` for `/api/` and `/auth/` (`vite.config.ts`). Before/with the
+  first real backend route, add explicit `workbox.runtimeCaching` (NetworkOnly for
+  auth, NetworkFirst/NetworkOnly for API) so no dynamic/authenticated route is ever
+  served from the cached SPA shell. (Security review, 2026-07-12, LOW-2.)
+- **Phase 1:** RLS on every table, verified with a cross-group negative test (user
+  in group A cannot read group B) as the phase exit gate.
+
 ## Decision log
 
 | Date | Decision | Why | Revisit when |

@@ -16,6 +16,10 @@ export default defineConfig({
       // formats aren't emitted to dist at all.
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,png,ico}'],
+        // The SW falls back to the cached SPA shell for navigations. Deny that
+        // for backend/auth routes so it never shadows the server once Phase 1
+        // lands (Phase 1/3 gate: add runtimeCaching for dynamic routes too).
+        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
       },
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {

@@ -1,7 +1,9 @@
 .vt-stepper { --_c: var(--evergreen); display: inline-flex; align-items: center; gap: 8px; }
 .vt-stepper__btn {
   appearance: none;
-  width: 40px; height: 40px;
+  /* 44px = the project's hard accessibility floor (68-year-old-on-Android
+     contract). Never shrink below this, including nested in a GoalRow. */
+  width: 44px; height: 44px;
   border-radius: 50%;
   border: 2.5px solid var(--_c);
   background: transparent;

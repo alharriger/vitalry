@@ -65,10 +65,11 @@
 .vt-goal--done .vt-goal__check { border-color: var(--_c); background: var(--_c); color: #fff; }
 .vt-goal__control { flex: none; display: flex; align-items: center; }
 
-/* Compact the trailing counter control so counter rows match the height of
-   simple check rows and the title never wraps. */
-.vt-goal__control .vt-stepper { gap: 5px; }
-.vt-goal__control .vt-stepper__btn { width: 36px; height: 36px; border-width: 2px; }
+/* Compact the trailing counter control's spacing/typography so counter rows
+   stay tight and the title never wraps — but keep the −/+ buttons at the full
+   44px touch-target floor (they're tapped daily on the rainbow/water goals). */
+.vt-goal__control .vt-stepper { gap: 2px; }
+.vt-goal__control .vt-stepper__btn { border-width: 2px; }
 .vt-goal__control .vt-stepper__btn .ph, .vt-goal__control .vt-stepper__btn [class*="ph-"] { font-size: 18px; }
-.vt-goal__control .vt-stepper__val { min-width: 30px; font-size: var(--text-lg); }
+.vt-goal__control .vt-stepper__val { min-width: 24px; font-size: var(--text-lg); }
 .vt-goal__control .vt-stepper__val small { font-size: var(--text-xs); }
