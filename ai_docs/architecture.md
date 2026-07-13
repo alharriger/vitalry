@@ -4,7 +4,13 @@ Web-first, native-ready. One codebase that later wraps into store apps via Capac
 
 **Standing budget constraint (Amber, 2026-07-12):** "balling on a budget" — no paid tooling
 or paid tiers unless a free option genuinely can't deliver quality. Target running cost
-**$0/mo** (only optional cost: a custom domain, ~$10–12/yr — deferrable; `*.pages.dev` works).
+**$0/mo**; the only spend is the custom domain **vitalry.xyz** (bought 2026-07-13, ~$10–12/yr).
+
+**Domain / origin (decided 2026-07-13):** the app is served from **vitalry.xyz** via Cloudflare
+Pages (a free custom domain on the free tier). **Point the domain at the Pages project before
+Phase 4 onboarding** so the family's PWA installs and web-push subscriptions bind to the final
+origin once — PWA installs and push are origin-bound, and moving origins later would force
+everyone to re-install and re-enable reminders. Until then, previews run on `*.pages.dev`.
 
 ## Stack (reassessed for budget, 2026-07-12)
 
@@ -76,3 +82,4 @@ daily_logs     (id, competition_id, user_id, local_date,
 | 2026-07-12 | Cloudflare Pages over Vercel/Netlify | Unlimited free bandwidth; commercial use allowed on free tier; free branch previews | CF build limits (500/mo) ever bite, or framework needs Vercel-specific features |
 | 2026-07-12 | Resend as Supabase custom SMTP from day 1 | Default Supabase mailer is 2/hr + team-only → magic links would break for family | Resend's 100/day cap approached (≈ never at family scale) |
 | 2026-07-12 | GitHub Actions keep-alive ping (every 3 days) | Free fix for Supabase 7-day inactivity pause between competitions | Upgrade to Supabase Pro ever justified |
+| 2026-07-13 | Custom domain `vitalry.xyz` on Cloudflare Pages | Trustworthy invite link; lock the final origin before the family installs (PWA/push are origin-bound) | Rebrand / new name at v1.5 |
