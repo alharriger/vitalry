@@ -12,7 +12,9 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     css: true,
-    // Unit/component tests only; Playwright owns e2e under /e2e.
-    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+    // Unit/component tests only; Playwright owns e2e under /e2e, and the RLS
+    // integration test (*.rlstest.ts) runs separately via vitest.rls.config.ts
+    // because it needs a live DB + service_role key.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/*.rlstest.ts'],
   },
 });

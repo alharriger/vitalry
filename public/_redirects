@@ -1,0 +1,5 @@
+# Cloudflare Pages SPA fallback: serve the app shell for any client-side route
+# on direct load / refresh (e.g. the magic-link return to /auth/callback, or a
+# refresh on /standings). The service worker denylists /auth/ from its cached
+# fallback, so this host-level rule is what makes the callback resolve.
+/*    /index.html    200

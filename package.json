@@ -11,10 +11,12 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rls": "vitest run --config vitest.rls.config.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
     "@phosphor-icons/web": "^2.1.2",
+    "@supabase/supabase-js": "^2.110.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.9.4"
@@ -31,6 +33,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "jsdom": "^25.0.1",
     "oxlint": "^1.71.0",
+    "supabase": "^2.109.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
     "vite-plugin-pwa": "^1.0.3",

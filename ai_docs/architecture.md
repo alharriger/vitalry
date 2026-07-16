@@ -34,17 +34,23 @@ weakness (the pause) is solved for free.
 ## Data model (schema source: plan §10)
 
 ```
-users          (id, name, avatar, email?, timezone, reminder_time)
+profiles       (id → auth.users, name, avatar, email?, timezone, reminder_time)
 groups         (id, name, created_by)
 group_members  (group_id, user_id, role: organizer|member)
 competitions   (id, group_id, name, start_date, duration_days,
-                prize_text?, status: pending|active|complete)
+                prize_text?, status: pending|active|complete, scoring_rules jsonb?)
 goals          (id, key, name, target_text, log_type: check|counter,
                 counter_max?, sort_order, active)          ← static seed in v1
 daily_logs     (id, competition_id, user_id, local_date,
-                goal_states: jsonb {goal_id: 0..n}, updated_at)
+                goal_states: jsonb {goal_key: 0..n}, updated_at)
                 UNIQUE (competition_id, user_id, local_date)
 ```
+
+**Implemented in Phase 1** (`supabase/migrations/`). Notes vs. the plan §10 sketch: the `users`
+entity is table **`profiles`** (keyed to `auth.users.id`, auto-created by a `handle_new_user`
+trigger) to avoid shadowing Supabase's `auth.users`; `competitions.scoring_rules jsonb` was added
+now (cheap) so Phase 2's "rules snapshot at start" needs no migration; `goal_states` is keyed by
+goal **key** (matching the client `GoalStates` type), not goal id.
 
 ## Standing architectural invariants
 
@@ -83,3 +89,7 @@ daily_logs     (id, competition_id, user_id, local_date,
 | 2026-07-12 | Resend as Supabase custom SMTP from day 1 | Default Supabase mailer is 2/hr + team-only → magic links would break for family | Resend's 100/day cap approached (≈ never at family scale) |
 | 2026-07-12 | GitHub Actions keep-alive ping (every 3 days) | Free fix for Supabase 7-day inactivity pause between competitions | Upgrade to Supabase Pro ever justified |
 | 2026-07-13 | Custom domain `vitalry.xyz` on Cloudflare Pages | Trustworthy invite link; lock the final origin before the family installs (PWA/push are origin-bound) | Rebrand / new name at v1.5 |
+| 2026-07-16 | `public.profiles` (not `users`) keyed to `auth.users` | Naming a `public.users` table shadows Supabase's `auth.users` — a well-known footgun; profile row auto-created by a `handle_new_user` trigger | Never (schema-level) |
+| 2026-07-16 | RLS via `SECURITY DEFINER` membership helpers (`is_group_member`, etc.) | A policy on `group_members` that queries `group_members` recurses infinitely; a definer helper with `search_path=''` reads it without re-triggering RLS | Postgres changes RLS semantics (won't) |
+| 2026-07-16 | Auth Site URL = `https://vitalry.xyz`; redirect allow-list = localhost:5173 + vitalry.xyz + *.pages.dev | Magic-link `emailRedirectTo` is honored only if allow-listed, else falls back to Site URL; lock the prod origin now | Add/adjust origins as deploys change |
+| 2026-07-16 | Migrations applied via `supabase db push` (CLI), not dashboard paste | Dashboard SQL editor rolls a whole batch back silently on any error; CLI push is explicit + records migration history | Never |
