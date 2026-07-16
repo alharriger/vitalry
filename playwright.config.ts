@@ -20,10 +20,13 @@ export default defineConfig({
     { name: 'Mobile Chrome', use: { ...devices['Pixel 7'] } },
   ],
   // Build + preview so the smoke test exercises the production bundle (incl. PWA).
+  // VITE_E2E stubs auth (see src/lib/auth.tsx) so the tests reach the app
+  // without a live Supabase backend or a real magic-link round-trip.
   webServer: {
     command: 'npm run build && npm run preview',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: { VITE_E2E: 'true' },
   },
 });

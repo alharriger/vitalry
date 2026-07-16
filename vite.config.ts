@@ -18,8 +18,19 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,woff2,png,ico}'],
         // The SW falls back to the cached SPA shell for navigations. Deny that
         // for backend/auth routes so it never shadows the server once Phase 1
-        // lands (Phase 1/3 gate: add runtimeCaching for dynamic routes too).
+        // lands.
         navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
+        // Security gate (review 2026-07-12, LOW-2): never serve an
+        // authenticated/dynamic response from cache. All backend traffic goes
+        // cross-origin to Supabase — force it straight to the network so no
+        // auth token or user row is ever read from (or written to) the cache.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co'),
+            handler: 'NetworkOnly',
+            method: 'GET',
+          },
+        ],
       },
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {

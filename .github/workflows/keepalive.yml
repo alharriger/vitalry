@@ -1,0 +1,45 @@
+name: Supabase keep-alive
+
+# Supabase's free tier pauses a project after 7 days of DB inactivity, which
+# would break magic-link sign-in between competitions. A read every 3 days
+# keeps it awake for free. `goals` is world-readable, so the anon key is all
+# this needs — no service_role secret involved.
+#
+# Requires two repo secrets: SUPABASE_URL and SUPABASE_ANON_KEY.
+
+on:
+  schedule:
+    - cron: '17 6 */3 * *' # every 3 days, 06:17 UTC (off the top of the hour)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    name: Ping REST endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one goal row
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY secrets are not set."
+            exit 1
+          fi
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "$SUPABASE_URL/rest/v1/goals?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "HTTP $code"
+          # 200 = rows, 206 = partial content (range) — both mean the DB answered.
+          if [ "$code" != "200" ] && [ "$code" != "206" ]; then
+            echo "::error::Keep-alive ping failed (HTTP $code)."
+            exit 1
+          fi

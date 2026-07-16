@@ -27,6 +27,32 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   interactive element against the accessibility floor and let the rule win over the reference.
 - **Status:** Active
 
+## Assumed a dashboard-pasted migration had applied when it hadn't
+- **What happened:** The Phase 1 schema was believed to be applied to the Supabase project, but
+  every table 404'd. A partial error in the pasted SQL had rolled the whole batch back silently,
+  leaving zero tables — while the `.env` and RLS test were built against a schema that wasn't there.
+- **Root cause:** Trusted a manual dashboard paste as "done" without verifying, and the SQL editor
+  runs the batch as one transaction so any single error discards everything with no lasting trace.
+- **Prevention rule:** Apply migrations with `supabase db push` (CLI), never a dashboard paste —
+  it's explicit, fails loudly, and records migration history. After any migration, verify the
+  tables/seed actually exist (a quick REST or `select` probe) before building on them.
+- **Status:** Active
+
+## Magic-link redirect dead-ended on a not-yet-live Site URL
+- **What happened:** Clicking a magic link bounced to `https://vitalry.xyz`, which doesn't resolve
+  yet (domain not pointed at Pages), so sign-in failed with ERR_NAME_NOT_RESOLVED. Separately, the
+  built-in Supabase mailer hit "email rate limit exceeded" (2/hr, owner-only) after a few tries.
+- **Root cause:** Supabase honors `emailRedirectTo` only if the origin is allow-listed; otherwise
+  it falls back to the Auth **Site URL**. The requesting origin (a phone on the Mac's LAN IP)
+  wasn't allow-listed, so it fell back to a domain that isn't live. And the default mailer is
+  unusable for real testing.
+- **Prevention rule:** The magic-link redirect origin must be BOTH allow-listed AND reachable on
+  the device where the link is opened. For dev, test on the machine running `npm run dev`
+  (localhost:5173) or a `*.pages.dev` preview. To verify sign-in without email, generate a link
+  with `admin.generateLink(...)` (service_role) — no mailer, no rate limit. Resend SMTP is
+  required before any real user (family) can receive links.
+- **Status:** Active
+
 ## Affordance copy shown for a non-existent feature (grace-window hint)
 - **What happened:** The Phase 0 Today screen shows "Yesterday is still editable until
   midnight," but there is no way to reach yesterday — it's a static hint with no backing

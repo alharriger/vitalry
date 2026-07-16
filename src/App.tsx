@@ -1,17 +1,60 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
 import { TodayScreen } from './screens/TodayScreen';
 import { Placeholder } from './screens/Placeholder';
+import { SignInScreen } from './screens/SignInScreen';
+import { AuthCallback } from './screens/AuthCallback';
+import { AuthProvider, useAuth } from './lib/auth';
 
 /**
- * App routing. The four primary tabs render inside AppLayout (with the pinned
- * tab bar); Setup / Onboarding / Results / Settings are full-screen flows
- * outside the tab shell. Only Today is built in Phase 0; the rest are branded
- * placeholders that establish the routes.
+ * App shell. AuthProvider wraps everything; AuthGate renders the sign-in wall
+ * until there's a session. The magic-link callback route resolves regardless
+ * of auth state (it's how you get a session in the first place).
  */
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+/** Minimal splash while the persisted session is being restored. */
+function Splash() {
+  return (
+    <main className="vt-signin">
+      <div className="vt-signin__card">
+        <span className="vt-signin__mark" aria-hidden="true">
+          <i className="ph-bold ph-leaf" />
+        </span>
+      </div>
+    </main>
+  );
+}
+
+function AuthGate() {
+  const { session, loading } = useAuth();
+  const location = useLocation();
+
+  // The callback must run even when unauthenticated so the token can be
+  // consumed and turned into a session.
+  if (location.pathname === '/auth/callback') return <AuthCallback />;
+  if (loading) return <Splash />;
+  if (!session) return <SignInScreen />;
+
+  return <AppRoutes />;
+}
+
+/**
+ * App routing (authenticated). The four primary tabs render inside AppLayout
+ * (with the pinned tab bar); Setup / Onboarding / Results / Settings are
+ * full-screen flows outside the tab shell. Only Today is built; the rest are
+ * branded placeholders that establish the routes.
+ */
+function AppRoutes() {
+  return (
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<TodayScreen />} />
@@ -121,6 +164,5 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
   );
 }

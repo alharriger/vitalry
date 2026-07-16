@@ -1,0 +1,19 @@
+# Supabase CLI project config. The project is provisioned in the cloud (Amber owns
+# the account); this file lets `supabase link` + `supabase db push` apply the
+# migrations in ./migrations to that project. Local `supabase start` is optional
+# (needs Docker) — used only if we ever run pgTAP tests.
+#
+# `project_id` is a local label; the real cloud ref is set at `supabase link` time.
+project_id = "vitalry"
+
+[db]
+# Match Supabase cloud's current Postgres major so local diffs stay faithful.
+major_version = 17
+
+[auth]
+# Passwordless only — magic link, no passwords (product rule).
+enable_signup = true
+
+[auth.email]
+# We send magic links, not signup confirmation emails.
+enable_confirmations = false
