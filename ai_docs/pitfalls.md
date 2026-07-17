@@ -27,6 +27,17 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   interactive element against the accessibility floor and let the rule win over the reference.
 - **Status:** Active
 
+## Integration test leaked fixtures into the live DB on a mid-setup failure
+- **What happened:** The RLS test's `beforeAll` created two auth users, then failed on the next
+  step (missing table). Teardown was guarded by `if (!fx) return` — but `fx` was never built, so
+  cleanup bailed and left two orphaned users in the real project.
+- **Root cause:** Teardown keyed off a single fixture object assembled at the END of setup, so any
+  failure before that point skipped cleanup entirely.
+- **Prevention rule:** In tests that seed a shared/live DB, push each created resource's id into a
+  tracking list the moment it's created, and delete from that list in `afterAll`/`finally` so
+  teardown runs even when setup throws. Verify the project is clean after the run.
+- **Status:** Active
+
 ## Assumed a dashboard-pasted migration had applied when it hadn't
 - **What happened:** The Phase 1 schema was believed to be applied to the Supabase project, but
   every table 404'd. A partial error in the pasted SQL had rolled the whole batch back silently,

@@ -5,10 +5,11 @@
 
 ## Current phase: Phase 2 — Today + scoring engine (not started)
 
-**Status:** Phase 1 shipped on branch `phase-1-backend-auth` (PR open, 2026-07-16). Backend +
-passwordless magic-link auth are live against the Supabase cloud project `cjsthmulslswrnbovrko`.
-**Both exit-gate halves verified:** magic-link sign-in (UI landed on Today + programmatic token
-exchange) and cross-group RLS isolation (`npm run test:rls`). Phase 2 is **not planned yet** —
+**Status:** Phase 1 **merged to `main`** (PR #2, squashed as `6b4ce5e`) on 2026-07-16; retro closed
+out 2026-07-17. Backend + passwordless magic-link auth are live against the Supabase cloud project
+`cjsthmulslswrnbovrko`, and the app is live at **https://vitalry.xyz** (Cloudflare Pages) with Resend
+email. **Both exit-gate halves verified:** magic-link sign-in (UI landed on Today + programmatic
+token exchange) and cross-group RLS isolation (`npm run test:rls`). Phase 2 is **not planned yet** —
 next step is to write the Phase 2 plan and get Amber's approval before any code, per the loop.
 
 ### Phase 2 scope (from roadmap)
@@ -68,8 +69,10 @@ sign-in test.
   `supabase db push` (needs `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_DB_PASSWORD` in `.env`).
   Do NOT rely on pasting into the dashboard SQL editor — a partial error rolls the whole batch
   back silently (learned 2026-07-15; pitfalls.md).
-- `.env` (gitignored) holds Supabase URL + anon + service_role + access token + DB password;
-  `.env.example` is the committed template. `supabase/.temp/` is gitignored.
+- `.env` (gitignored) holds Supabase URL + anon + service_role + access token + DB password +
+  `RESEND_API_KEY` (send-only); `.env.example` is the committed template. `supabase/.temp/` is
+  gitignored. Cloudflare Pages + GitHub Actions hold only the public `VITE_` values, never the
+  service_role / DB password / Resend key.
 - Design handoff is high-fidelity for built screens; Join/onboarding, Settings, and **auth**
   screens have no design reference — build from plan §8 + tokens. The hard rules (44px targets,
   WCAG AA, ≥16px body) win over the reference (pitfalls.md).
