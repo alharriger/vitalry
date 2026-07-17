@@ -23,16 +23,17 @@ Scoring suite green incl. edge cases (streak reset, cap, grace lock, local midni
 check-in < 20s on a phone · tap → reload → state persists · yesterday editable within grace,
 locked after.
 
+### Infra now live (done 2026-07-17)
+- **Resend custom SMTP is configured and delivering** — Supabase Auth sends via `smtp.resend.com`
+  as `Vitalry <no-reply@vitalry.xyz>` (Resend send-only API key in `.env`; `vitalry.xyz` verified
+  in Resend). Live magic-link delivery to Gmail confirmed. The built-in 2/hr mailer no longer
+  applies.
+- **`vitalry.xyz` is live on Cloudflare Pages** (Git integration: pushes to `main` auto-build;
+  build env has `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `NODE_VERSION=22`). Serving the app
+  over HTTPS with SPA fallback; `*.pages.dev` previews also live. Auth Site URL = `https://vitalry.xyz`.
+  PWA origin is now locked for installs/push.
+
 ### Phase 1 carry-overs into later phases
-- **Resend SMTP is REQUIRED before the family can sign in.** The built-in Supabase mailer is
-  ~2/hr and only reaches the project-owner address — confirmed the hard way on 2026-07-15
-  ("email rate limit exceeded"). Amber owns the Resend account + `vitalry.xyz` DNS verification;
-  then wire SMTP in Supabase → Auth. Until then, dev/test signs in via an admin-generated link
-  (see below) or the owner address. (pitfalls.md)
-- **Point `vitalry.xyz` at Cloudflare Pages before Phase 4.** Magic-link redirects fall back to
-  the Auth **Site URL** (`https://vitalry.xyz`), which isn't live yet, so a link opened anywhere
-  but an allow-listed reachable origin dead-ends. Dev/test uses `localhost:5173` or a `*.pages.dev`
-  preview (both allow-listed). (architecture.md decision log)
 - **Phase 4 needs a creator-becomes-organizer trigger/policy.** `group_members` INSERT requires
   organizer, so a client cannot bootstrap a usable group yet. Harmless now (Phase 1 seeds via
   service_role; group-creation UX is Phase 4) — but Phase 4 must add a trigger that makes a
