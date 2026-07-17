@@ -188,6 +188,18 @@ The day-browser, calendar-cell language, and scoring engine built here are reuse
 **History tab** (replaces Progress; "This competition" heatmap + per-goal rates + streak history,
 and "All history" past-competition browsing). See `vitalry_product.md` roadmap + handoff frame 2e.
 
+## Design handoff docs — keep until consumed, THEN remove (tracked cleanup)
+The date-nav/day-view handoff is **active scaffolding** — every Phase 2 UI step (2.3–2.5) and the
+Phase 5 History tab build against it. **Keep them for now; do NOT delete mid-phase.** Once the last
+consumer has shipped, mark them safe to remove HERE (a dated line) and then delete:
+- `ai_docs/date_nav_design_brief.md`
+- `design_handoff_vitalry_v1/date-nav-day-view/` (README + frames)
+
+Removal gate: **2.5 merged AND Phase 5 History merged** (both consume these). Until both are done,
+this list stays. When the last one lands, add e.g. "`safe to remove 2026-XX-XX — 2.5 + Phase 5 both
+shipped`" above and clear the docs in that step's cleanup. (Same disposition applies to any other
+`design_handoff_vitalry_v1/` frames once their screens are built.)
+
 ---
 
 ## Infra live (done 2026-07-17)
