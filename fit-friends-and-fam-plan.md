@@ -83,20 +83,26 @@ Same list for everyone in v1. No configuration. Several goals are *flexible in h
 
 All scoring is per-player, per-day, summed across the competition.
 
+> **Revised 2026-07-17 (Amber, during Phase 2.1 build):** the streak was simplified from a
+> +1..+5 ramp on *active* days to a **flat +2 on a run of *perfect* days**. Max daily 17 → 14.
+> Rationale: the ramp made the streak bonus too large/rewarding and the rule harder to explain;
+> a "3 perfect days in a row = +2 a day" streak is a higher bar and one sentence to teach. The
+> table below is the current contract; the engine (`src/lib/scoring.ts`) and its suite match it.
+
 | Mechanic | Rule |
 |---|---|
 | **Base points** | 1 point per goal completed. Max 9/day. |
 | **Perfect day bonus** | All 9 goals in one day → **+3** |
-| **Active day** (streak unit) | A day with **6+ of 9** goals completed |
-| **Streak bonus** | +1 point per consecutive active day, **capped at +5/day**. (Day 1 of a streak = +1, day 5+ = +5.) Streak resets after a non-active day. |
-| **Max daily score** | 9 + 3 + 5 = **17** |
+| **Streak** (unit = **perfect day**, all 9) | On a run of **3+ consecutive perfect days**, each perfect day from the 3rd on earns a **flat +2**. Days 1–2 earn no streak bonus. Any non-perfect day (incl. an unlogged day) resets the run to 0. |
+| **Active day** (**6+ of 9**) | Calendar-cell classification only (`dayClass`) — **not** a scoring input in v1. |
+| **Max daily score** | 9 + 3 + 2 = **14** (on the 3rd+ perfect day of a streak) |
 | **Day boundary** | Each player's **local midnight**. Simple mental model; time zones never fight the clock. |
 | **Grace window** | Yesterday stays editable until the end of today (local). Older days lock. Forgiving for forgetful loggers, hard to abuse. |
-| **Tie-breakers** | 1) Most perfect days → 2) Longest streak → 3) Shared rank (co-winners are fine; this is family). |
+| **Tie-breakers** | 1) Most perfect days → 2) Longest (perfect) streak → 3) Shared rank (co-winners are fine; this is family). |
 
 **Design requirement — transparency:** every player must be able to see exactly how any score was earned (tap a leaderboard row → day-by-day breakdown). Competitive players trust what they can audit; parents learn the rules by seeing them.
 
-**Catchability check:** streak cap +5 and active-day threshold of 6/9 keep the leaderboard catchable deep into a 30-day competition. If playtesting shows runaway leaders, tune the cap down — never remove the grace window instead.
+**Catchability check:** requiring 3 consecutive *perfect* days for a flat +2 (rather than a ramp on merely-active days) keeps the leaderboard catchable deep into a 30-day competition. If playtesting shows runaway leaders, tune the streak bonus or threshold — never remove the grace window instead.
 
 ## 7. Competition mechanics
 
