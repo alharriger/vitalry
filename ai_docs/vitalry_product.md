@@ -46,10 +46,10 @@ user has approved. Ordering follows the handoff §7.
 |---|---|---|
 | **0 — Scaffold** | Vite + React + TS + PWA plugin; design tokens + fonts + Phosphor wired; routing shell (4 tabs + flow routes); port core components Today needs | App runs on a phone-width viewport with styled tab shell; tokens resolve; user approves look |
 | **1 — Backend & auth** | Supabase project; schema from plan §10; seed Daily 9; RLS scoped to group membership; magic-link/invite auth | A test user can sign in via magic link; RLS verified (user A cannot read group B) |
-| **2 — Today + scoring engine** | Today screen on live `daily_logs`; scoring as a pure, fully-tested module (base/perfect/active/streak/cap/grace); rules snapshot per competition; **optimistic taps auto-saved to Supabase with a visible "saved" indicator** (no manual Save button — see UX note below); **yesterday reachable + editable within the grace window** (the "still editable until midnight" affordance made real) | Scoring suite green incl. edge cases (streak reset, cap, grace lock, local midnight); real check-in < 20s on a phone; tap → reload → state persists; yesterday editable within grace, locked after |
+| **2 — Today + scoring engine** | Today on live `daily_logs`; scoring as a pure, fully-tested module (base/perfect/active/streak/cap/grace); rules snapshot per competition; optimistic taps auto-saved with a visible "All saved ✓" indicator (no Save button); **date navigation — "step and open" (prev/next day + a month-sheet picker with a per-day heatmap), scoped to the current competition; a reusable day-browser with editable (today/yesterday), read-only, and missed-day states**; grace lock enforced (client + DB trigger in the player's local tz). Design handoff: `design_handoff_vitalry_v1/date-nav-day-view/` (frames 2a–2d, 2b). | Scoring suite green incl. edge cases (streak reset, cap, grace lock, local midnight); real check-in < 20s on a phone; tap → reload → persists; yesterday editable within grace, locked after; can browse/read earlier days of the competition |
 | **3 — Leaderboard + breakdown** | Realtime ranking, today-progress pips, tap-through day breakdown, days-remaining + prize header | Two devices see each other's taps live; breakdown math matches engine exactly |
 | **4 — Setup + onboarding + invites** | Organizer creates competition → invite link; join flow: name/avatar/how-it-works/add-to-home-screen/reminders | A brand-new person joins from a text-message link in < 2 min, no help |
-| **5 — Progress, Group, Results** | Personal heatmap + per-goal rates; group home + "run it back"; finale celebration + superlatives | Full competition lifecycle works end-to-end incl. finished-competition results |
+| **5 — History, Group, Results** | **History tab replaces Progress ("World A"):** "This competition" = month heatmap + per-goal completion rates + streak history; "All history" = list of every past competition with mini-heatmaps, each tapping through to that competition's read-only day browser (reuses the **Phase 2 day-browser + calendar-cell language**). Group home + "run it back"; finale celebration + superlatives. Design handoff: `design_handoff_vitalry_v1/date-nav-day-view/` (frame 2e). | Full competition lifecycle end-to-end incl. finished-competition results; History browses every past competition's days |
 | **6 — Notifications & polish** | Web push + email fallback; daily reminder + competition events; accessibility audit | Reminder arrives on Android Chrome and iOS (installed); audit against principle 5 passes |
 | **Beta** | Family competition, measure metrics (plan §14) | ≥60% still logging on final day; "run it back" happens unprompted |
 
@@ -98,6 +98,9 @@ autosave pattern. If Amber still wants an explicit button after seeing it, that'
 The Phase 0 reload-reset that prompted this is **not** a design flaw — it's simply the scaffold
 having no backend yet. Persistence lands with Phase 2.
 
+**Decided 2026-07-17:** autosave + an always-visible **"All saved ✓"** indicator — no Save
+button. (Logged under Human-owned decisions.)
+
 ## Out of scope for v1 (do not design for by accident)
 
 Real money · wearable sync (architecture-ready only) · custom/configurable goals · custom
@@ -119,9 +122,21 @@ durations · raw-stat comparisons (**permanent**) · chat/comments · photo proo
 - ✅ **Budget constraint:** "balling on a budget" — build something great without paid
   tooling; free tiers wherever quality allows. Architecture must honor this.
 
+**Decided by Amber 2026-07-17:**
+- ✅ **Save affordance (Phase 2):** autosave + an always-visible **"All saved ✓"** indicator.
+      No manual Save button. Resolves the Phase 0 open question.
+- ✅ **Date navigation = "step and open":** prev/next-day arrows + a tappable date that opens a
+      **month-sheet picker** (a per-day heatmap of the competition). The month sheet is the only
+      picker. Today + yesterday editable; every other day read-only. Finished design handed off
+      (`design_handoff_vitalry_v1/date-nav-day-view/`). Supersedes the earlier Today/Yesterday
+      toggle idea.
+- ✅ **"World A" — the third tab becomes History (replaces Progress).** History holds "This
+      competition" (heatmap + per-goal rates + streak history) and "All history" (every past
+      competition, tap-through to its day browser). Lands in **Phase 5**; reuses the Phase 2
+      day-browser.
+
 **Still open:**
-- [ ] **Save affordance (Phase 2):** autosave + visible "saved" indicator (recommended) vs.
-      an explicit Save button. See the UX note above; decide once Amber sees the indicator in
-      Phase 2. Raised from her Phase 0 test.
 - [ ] **Leaderboard detail of others:** counts + tap-through breakdown (recommended) vs
       broadcasting individual goals. Decide during Phase 3 design.
+- [ ] **Month-sheet boundary (design open item):** one month with prev/next chevrons vs. a single
+      `start_date → today` grid, since a 30-day game can straddle two months. Decide during Phase 2 build.
