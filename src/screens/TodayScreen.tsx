@@ -88,7 +88,7 @@ export function TodayScreen() {
     ? canStepPrev
       ? 'Yesterday is still editable until midnight'
       : null
-    : `${dateLabel(viewedDate)} is still editable until midnight`;
+    : 'This day is still editable until midnight';
 
   return (
     <div>
