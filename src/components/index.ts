@@ -10,6 +10,9 @@ export { colorForName } from '../lib/avatarColor';
 export { ProgressRing, type ProgressRingProps } from './ui/ProgressRing';
 export { TabBar, type TabBarProps, type TabItem } from './ui/TabBar';
 export { SaveIndicator, type SaveIndicatorProps } from './ui/SaveIndicator';
+export { Wordmark, type WordmarkProps } from './ui/Wordmark';
+export { Mark, type MarkProps, type MarkVariant } from './ui/Mark';
+export { Logo, type LogoProps } from './ui/Logo';
 
 // Goals (signature)
 export { GoalRow, type GoalRowProps } from './goals/GoalRow';

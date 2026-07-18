@@ -1,0 +1,14 @@
+.vt-logo {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+.vt-logo--horizontal {
+  flex-direction: row;
+  gap: var(--space-3);
+}
+.vt-logo--stacked {
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: center;
+}

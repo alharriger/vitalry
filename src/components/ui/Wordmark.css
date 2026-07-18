@@ -1,0 +1,31 @@
+.vt-wordmark {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.vt-wordmark__type {
+  font-family: var(--font-display);
+  font-weight: var(--fw-extra);
+  letter-spacing: var(--ls-tight);
+  color: var(--evergreen);
+  line-height: 1;
+}
+/* The signature light-green period — tonal, within the green family. */
+.vt-wordmark__dot { color: var(--green-500); }
+
+.vt-wordmark--sm .vt-wordmark__type { font-size: var(--text-2xl); }
+.vt-wordmark--md .vt-wordmark__type { font-size: var(--text-4xl); }
+.vt-wordmark--lg .vt-wordmark__type { font-size: 52px; }
+.vt-wordmark--xl .vt-wordmark__type { font-size: 68px; }
+
+/* Vertical lockup tagline — muted sage, uppercase, tracked out. */
+.vt-wordmark__tagline {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.26em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sage-500);
+  margin-top: 0.55em;
+}

@@ -1,4 +1,16 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="112" fill="#0F4D2E"/>
-  <path d="M150 150 L256 372 L362 150" fill="none" stroke="#FCF9F3" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Vitalry">
+  <rect x="0" y="0" width="512" height="512" rx="116" ry="116" fill="#0F4D2E"></rect>
+  <g transform="translate(76,66) scale(3)">
+    <g stroke="#FCF9F3" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 46 102 L 42 47"></path>
+      <path d="M 44 80 Q 34 76 31 65"></path>
+      <path d="M 74 102 L 78 47"></path>
+      <path d="M 76 80 Q 86 76 89 65"></path>
+    </g>
+    <g stroke="#52BC7C" fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M 53 41 L 49 29"></path>
+      <path d="M 60 39 L 60 26"></path>
+      <path d="M 67 41 L 71 29"></path>
+    </g>
+  </g>
 </svg>

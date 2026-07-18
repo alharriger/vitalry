@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="Vitalry high-five mark">
+  <g stroke="#FCF9F3">
+    <path d="M 46 102 L 42 47" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M 44 80 Q 34 76 31 65" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M 74 102 L 78 47" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M 76 80 Q 86 76 89 65" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+  </g>
+  <g stroke="#52BC7C">
+    <path d="M 53 41 L 49 29" fill="none" stroke-width="8" stroke-linecap="round"></path>
+    <path d="M 60 39 L 60 26" fill="none" stroke-width="8" stroke-linecap="round"></path>
+    <path d="M 67 41 L 71 29" fill="none" stroke-width="8" stroke-linecap="round"></path>
+  </g>
+</svg>
