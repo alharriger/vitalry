@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:rls": "vitest run --config vitest.rls.config.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "seed:dev": "vite-node scripts/seed-dev-competition.ts"
   },
   "dependencies": {
     "@phosphor-icons/web": "^2.1.2",

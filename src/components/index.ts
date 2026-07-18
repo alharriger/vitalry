@@ -9,6 +9,7 @@ export { Avatar, type AvatarProps } from './ui/Avatar';
 export { colorForName } from '../lib/avatarColor';
 export { ProgressRing, type ProgressRingProps } from './ui/ProgressRing';
 export { TabBar, type TabBarProps, type TabItem } from './ui/TabBar';
+export { SaveIndicator, type SaveIndicatorProps } from './ui/SaveIndicator';
 
 // Goals (signature)
 export { GoalRow, type GoalRowProps } from './goals/GoalRow';
