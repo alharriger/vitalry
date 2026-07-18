@@ -13,26 +13,36 @@ import {
   findActiveCompetition,
   loadUserLogs,
   loadViewerProfile,
+  updateProfileTimezone,
   upsertDayLog,
   type ActiveCompetition,
 } from './dailyLogs';
 import {
   DEFAULT_SCORING_RULES,
   localDateToday,
+  previousLocalDate,
+  nextLocalDate,
   scoreCompetition,
   scoreDay,
   type DayScoreResult,
 } from './scoring';
+import { dayNumber, isEditableDay, stepBounds } from './dayNav';
 import type { GoalStates } from '../types';
 
 /**
- * Today's live state — one shared fetch behind the Today screen and the tab
- * bar's pending dot. Owns the viewer's active competition, their logged history,
- * today's editable check-in, the real engine-computed day score, and a coalesced
- * autosave that writes `daily_logs` on every tap.
+ * The live day state behind Today — one shared fetch feeding the Today screen
+ * and the tab bar's pending dot. Owns the viewer's active competition, their
+ * logged history, the currently-viewed day, a coalesced per-day autosave, and
+ * the real engine-computed scores.
  *
- * Phase 2.2 scope: TODAY ONLY. There is no date navigation yet (that's 2.3+),
- * so the only editable day is the player's local today.
+ * Phase 2.3 scope: the day-browser reaches TODAY + YESTERDAY. Both are editable
+ * (the grace window); stepping is capped there (prev floors at yesterday, next
+ * ceils at today). 2.4 uncaps prev to `start_date` and adds read-only rendering;
+ * 2.5 adds the month-sheet picker (the center date button becomes tappable).
+ *
+ * Day boundary is the player's LOCAL clock, kept honest: the timezone is synced
+ * from their device on load and "today" is re-derived when the app regains
+ * focus, so crossing local midnight with the app open rolls the day over.
  */
 
 /** How the current day's save is going, for the SaveIndicator. */
@@ -47,18 +57,41 @@ interface TodayLog {
   noCompetition: boolean;
   /** The viewer's display name (for the greeting). */
   name: string;
+  /** The viewer's local hour (0–23), for a timezone-correct greeting. */
+  localHour: number;
   /** The active competition, or null while loading / when there is none. */
   competition: ActiveCompetition | null;
   /** Today's local date `'YYYY-MM-DD'` in the viewer's timezone. */
   today: string;
-  /** Today's goal states (the editable check-in). */
-  todayState: GoalStates;
-  /** Toggle/set one goal for today; optimistic + autosaves. */
+  /** The day currently shown in the browser (defaults to today). */
+  viewedDate: string;
+  /** The viewed day's goal states (editable when the day is in grace). */
+  viewedState: GoalStates;
+  /** Toggle/set one goal on the viewed day; optimistic + autosaves. No-op on a
+   *  read-only day. */
   setGoal: (key: string, value: boolean | number) => void;
-  /** Autosave status for today's write. */
+  /** Autosave status across the editable days. */
   saveStatus: SaveStatus;
-  /** Engine result for today (base + perfect + streak), incl. doneCount/dayClass. */
-  todayResult: DayScoreResult;
+  /** Engine result for the viewed day (base + perfect + streak). */
+  viewedResult: DayScoreResult;
+  /** Whether the viewed day is editable (today or yesterday, in grace). */
+  isEditable: boolean;
+  /** Whether the viewed day is today. */
+  isToday: boolean;
+  /** 1-based day number of the viewed day within the competition. */
+  dayNumber: number;
+  /** Total days in the competition. */
+  totalDays: number;
+  /** Can the viewer step to an earlier day (not at the floor)? */
+  canStepPrev: boolean;
+  /** Can the viewer step to a later day (not at today)? */
+  canStepNext: boolean;
+  /** Step the viewed day back by one (within the reachable window). */
+  stepPrev: () => void;
+  /** Step the viewed day forward by one (never past today). */
+  stepNext: () => void;
+  /** Jump back to today. */
+  goToToday: () => void;
   /** Current run of consecutive perfect days ending today (for the flame). */
   currentStreak: number;
   /** Convenience: today isn't active yet (drives the tab-bar dot). */
@@ -73,6 +106,30 @@ function emptyDayResult(localDate: string): DayScoreResult {
   return { localDate, ...base, streakBonus: 0, total: base.base + base.perfectBonus };
 }
 
+/** The device's IANA timezone, or null if it can't be resolved. */
+function resolveDeviceTimezone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
+/** The viewer's current hour (0–23) in a given timezone. */
+function localHourIn(timeZone: string | undefined, now: Date = new Date()): number {
+  try {
+    const s = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+      timeZone,
+    }).format(now);
+    const h = parseInt(s, 10);
+    return Number.isFinite(h) ? h % 24 : now.getHours();
+  } catch {
+    return now.getHours();
+  }
+}
+
 /** How long to wait before retrying a failed save (ms). */
 const SAVE_RETRY_MS = 2500;
 
@@ -85,18 +142,29 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
   const [name, setName] = useState('there');
   const [competition, setCompetition] = useState<ActiveCompetition | null>(null);
   const [today, setToday] = useState(() => localDateToday());
-  // Historical logs keyed by date (includes today's persisted row on load).
+  const [viewedDate, setViewedDate] = useState(() => localDateToday());
+  // Logged goal states keyed by date — the source of truth for scoring, updated
+  // optimistically as the viewer edits an in-grace day.
   const [logsByDate, setLogsByDate] = useState<Record<string, GoalStates>>({});
-  // Today's live, editable state (the source of truth for edits + scoring).
-  const [todayState, setTodayState] = useState<GoalStates>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-  // --- Autosave machinery (refs so the loop is closure-stable). ------------
-  const latestRef = useRef<GoalStates>({}); // newest desired today-state
-  const savedJsonRef = useRef<string>('{}'); // JSON of last state known-saved
+  // --- Closure-stable mirrors + autosave machinery. ------------------------
+  const tzRef = useRef<string | undefined>(undefined); // effective timezone
+  const todayRef = useRef(today); // latest today (for setGoal's editable guard)
+  const viewedRef = useRef(viewedDate); // latest viewed day (edit target)
+  const logsRef = useRef<Record<string, GoalStates>>({}); // mirror of logsByDate
+  const savedJsonRef = useRef<Map<string, string>>(new Map()); // last-saved JSON per date
+  const editedDatesRef = useRef<Set<string>>(new Set()); // dates touched this session
   const savingRef = useRef(false); // a save loop is in flight
-  const ctxRef = useRef<{ compId: string; localDate: string } | null>(null);
+  const ctxRef = useRef<{ compId: string } | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    todayRef.current = today;
+  }, [today]);
+  useEffect(() => {
+    viewedRef.current = viewedDate;
+  }, [viewedDate]);
 
   // --- Initial load --------------------------------------------------------
   useEffect(() => {
@@ -113,22 +181,35 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const profile = await loadViewerProfile(userId);
-        const localToday = localDateToday(profile.timezone);
+        // Keep the stored zone in step with the device the player is actually on
+        // so the client and the server grace-window trigger agree on "today".
+        const deviceTz = resolveDeviceTimezone();
+        let effectiveTz = profile.timezone;
+        if (deviceTz && deviceTz !== profile.timezone) {
+          effectiveTz = deviceTz;
+          updateProfileTimezone(userId, deviceTz).catch((err) =>
+            console.warn('Timezone sync failed (non-fatal)', err),
+          );
+        }
+        const localToday = localDateToday(effectiveTz);
         const comp = await findActiveCompetition();
         const logs = comp ? await loadUserLogs(comp.id, userId) : {};
         if (cancelled) return;
 
-        const loadedToday = logs[localToday] ?? {};
         setName(profile.name);
+        tzRef.current = effectiveTz;
         setToday(localToday);
+        setViewedDate(localToday);
         setCompetition(comp);
         setLogsByDate(logs);
-        setTodayState(loadedToday);
 
-        // Prime the save machinery so an unchanged today never auto-writes.
-        latestRef.current = loadedToday;
-        savedJsonRef.current = JSON.stringify(loadedToday);
-        ctxRef.current = comp ? { compId: comp.id, localDate: localToday } : null;
+        // Prime the save machinery so an unchanged day never auto-writes.
+        logsRef.current = logs;
+        savedJsonRef.current = new Map(
+          Object.entries(logs).map(([d, s]) => [d, JSON.stringify(s)]),
+        );
+        editedDatesRef.current = new Set();
+        ctxRef.current = comp ? { compId: comp.id } : null;
         setSaveStatus('idle');
       } catch (err) {
         if (cancelled) return;
@@ -144,40 +225,82 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  // Clear any pending retry on unmount.
-  useEffect(() => () => {
-    if (retryRef.current) clearTimeout(retryRef.current);
+  // Re-derive "today" from the player's local clock when the app regains focus,
+  // so crossing local midnight with the app open rolls the day over.
+  useEffect(() => {
+    function refresh() {
+      const t = localDateToday(tzRef.current);
+      setToday((prev) => (prev === t ? prev : t));
+    }
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, []);
 
-  // --- Coalesced save loop -------------------------------------------------
-  // One upsert in flight at a time. If today's state changes mid-write, the
-  // loop notices (latest !== saved) and re-sends — so rapid stepper taps
-  // collapse into the minimum number of writes and never race.
+  // Keep the viewed day inside the reachable window as "today" moves (rollover)
+  // or the competition loads.
+  useEffect(() => {
+    if (!competition) return;
+    const b = stepBounds(competition.startDate, today);
+    setViewedDate((v) => {
+      if (v > b.max) return b.max;
+      if (v < b.min) return b.max; // fell out of grace → snap to today
+      return v;
+    });
+  }, [today, competition]);
+
+  // Clear any pending retry on unmount.
+  useEffect(
+    () => () => {
+      if (retryRef.current) clearTimeout(retryRef.current);
+    },
+    [],
+  );
+
+  // --- Coalesced per-day save loop -----------------------------------------
+  // One upsert in flight at a time, across every edited day. If any day's state
+  // changes mid-write, the loop notices (latest !== saved) and re-sends — so
+  // rapid stepper taps collapse into the minimum number of writes and never
+  // race, whether they land on today or yesterday.
   const runSaveLoop = useCallback(async (userIdArg: string) => {
     const ctx = ctxRef.current;
     if (!ctx || savingRef.current) return;
     savingRef.current = true;
     try {
-      while (JSON.stringify(latestRef.current) !== savedJsonRef.current) {
-        const snapshot = latestRef.current;
-        const snapshotJson = JSON.stringify(snapshot);
-        setSaveStatus('saving');
-        try {
-          await upsertDayLog({
-            competitionId: ctx.compId,
-            userId: userIdArg,
-            localDate: ctx.localDate,
-            goalStates: snapshot,
-          });
-          savedJsonRef.current = snapshotJson;
-        } catch (err) {
-          console.error('daily_logs save failed', err);
-          savingRef.current = false;
-          setSaveStatus('error');
-          if (retryRef.current) clearTimeout(retryRef.current);
-          retryRef.current = setTimeout(() => runSaveLoop(userIdArg), SAVE_RETRY_MS);
-          return;
+      const dirtyDates = () =>
+        [...editedDatesRef.current].filter(
+          (d) =>
+            JSON.stringify(logsRef.current[d] ?? {}) !== (savedJsonRef.current.get(d) ?? '{}'),
+        );
+
+      let pending = dirtyDates();
+      while (pending.length) {
+        for (const date of pending) {
+          const snapshot = logsRef.current[date] ?? {};
+          const snapshotJson = JSON.stringify(snapshot);
+          if (snapshotJson === (savedJsonRef.current.get(date) ?? '{}')) continue;
+          setSaveStatus('saving');
+          try {
+            await upsertDayLog({
+              competitionId: ctx.compId,
+              userId: userIdArg,
+              localDate: date,
+              goalStates: snapshot,
+            });
+            savedJsonRef.current.set(date, snapshotJson);
+          } catch (err) {
+            console.error('daily_logs save failed', err);
+            savingRef.current = false;
+            setSaveStatus('error');
+            if (retryRef.current) clearTimeout(retryRef.current);
+            retryRef.current = setTimeout(() => runSaveLoop(userIdArg), SAVE_RETRY_MS);
+            return;
+          }
         }
+        pending = dirtyDates();
       }
       // Nothing left to send.
       setSaveStatus('saved');
@@ -189,38 +312,44 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
   const setGoal = useCallback(
     (key: string, value: boolean | number) => {
       if (!userId || !ctxRef.current) return;
-      const next = { ...latestRef.current, [key]: value };
-      latestRef.current = next;
-      setTodayState(next);
-      // No need to also write logsByDate[today]: the scoring memo always
-      // overrides today with todayState, which is the source of truth for edits.
+      const date = viewedRef.current;
+      // Grace guard — never let a read-only day be edited (the DB trigger is the
+      // backstop, but don't even attempt a write that would bounce).
+      if (!isEditableDay(todayRef.current, date)) return;
+      const current = logsRef.current[date] ?? {};
+      const next = { ...current, [key]: value };
+      logsRef.current = { ...logsRef.current, [date]: next };
+      editedDatesRef.current.add(date);
+      setLogsByDate(logsRef.current);
       void runSaveLoop(userId);
     },
     [userId, runSaveLoop],
   );
 
   // --- Derived scoring (real engine, live) ---------------------------------
-  const { todayResult, currentStreak } = useMemo(() => {
+  const { todayResult, viewedResult, currentStreak } = useMemo(() => {
     if (!competition) {
-      return { todayResult: emptyDayResult(today), currentStreak: 0 };
+      const empty = emptyDayResult(today);
+      return { todayResult: empty, viewedResult: emptyDayResult(viewedDate), currentStreak: 0 };
     }
     const rules = competition.scoringRules ?? DEFAULT_SCORING_RULES;
-    const merged = { ...logsByDate, [today]: todayState };
-    // Clamp the window's right edge so a not-yet-started comp doesn't produce
-    // an empty range (localDateRange returns [] when asOf < startDate).
+    // Clamp the window's right edge so a not-yet-started comp doesn't produce an
+    // empty range (localDateRange returns [] when asOf < startDate).
     const asOf = today >= competition.startDate ? today : competition.startDate;
     const standing = scoreCompetition({
       startDate: competition.startDate,
       asOf,
-      logsByDate: merged,
+      logsByDate,
       rules,
     });
-    const result = standing.days.find((d) => d.localDate === today) ?? emptyDayResult(today);
+    const byDate = new Map(standing.days.map((d) => [d.localDate, d]));
+    const tResult = byDate.get(today) ?? emptyDayResult(today);
+    const vResult = byDate.get(viewedDate) ?? emptyDayResult(viewedDate);
 
-    // Current streak = trailing run of perfect days. An in-progress today that
-    // isn't perfect *yet* must not zero out a live streak — the day isn't lost
-    // until it ends — so when today is still incomplete we count the run ending
-    // at yesterday; a perfect today extends it.
+    // Current streak = trailing run of perfect days ending at today. An
+    // in-progress today that isn't perfect *yet* must not zero out a live
+    // streak — the day isn't lost until it ends — so when today is still
+    // incomplete we count the run ending at yesterday; a perfect today extends it.
     let streak = 0;
     let i = standing.days.length - 1;
     if (i >= 0 && standing.days[i].localDate === today && !standing.days[i].isPerfect) {
@@ -230,8 +359,38 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       if (standing.days[i].isPerfect) streak += 1;
       else break;
     }
-    return { todayResult: result, currentStreak: streak };
-  }, [competition, logsByDate, todayState, today]);
+    return { todayResult: tResult, viewedResult: vResult, currentStreak: streak };
+  }, [competition, logsByDate, today, viewedDate]);
+
+  // --- Navigation ----------------------------------------------------------
+  const bounds = useMemo(
+    () => (competition ? stepBounds(competition.startDate, today) : { min: today, max: today }),
+    [competition, today],
+  );
+  const canStepPrev = viewedDate > bounds.min;
+  const canStepNext = viewedDate < bounds.max;
+
+  const stepPrev = useCallback(() => {
+    setViewedDate((v) => {
+      const prev = previousLocalDate(v);
+      return prev >= bounds.min ? prev : v;
+    });
+  }, [bounds.min]);
+
+  const stepNext = useCallback(() => {
+    setViewedDate((v) => {
+      const next = nextLocalDate(v);
+      return next <= bounds.max ? next : v;
+    });
+  }, [bounds.max]);
+
+  const goToToday = useCallback(() => setViewedDate(today), [today]);
+
+  const isToday = viewedDate === today;
+  const isEditable = isEditableDay(today, viewedDate);
+  const totalDays = competition?.durationDays ?? 0;
+  const viewedDayNumber = competition ? dayNumber(competition.startDate, viewedDate) : 0;
+  const localHour = localHourIn(tzRef.current);
 
   const value = useMemo<TodayLog>(
     () => ({
@@ -239,12 +398,23 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       loadError,
       noCompetition: !loading && !loadError && competition === null,
       name,
+      localHour,
       competition,
       today,
-      todayState,
+      viewedDate,
+      viewedState: logsByDate[viewedDate] ?? {},
       setGoal,
       saveStatus,
-      todayResult,
+      viewedResult,
+      isEditable,
+      isToday,
+      dayNumber: viewedDayNumber,
+      totalDays,
+      canStepPrev,
+      canStepNext,
+      stepPrev,
+      stepNext,
+      goToToday,
       currentStreak,
       checkinPending: !todayResult.isActive,
     }),
@@ -253,12 +423,24 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       loadError,
       competition,
       name,
+      localHour,
       today,
-      todayState,
+      viewedDate,
+      logsByDate,
       setGoal,
       saveStatus,
-      todayResult,
+      viewedResult,
+      isEditable,
+      isToday,
+      viewedDayNumber,
+      totalDays,
+      canStepPrev,
+      canStepNext,
+      stepPrev,
+      stepNext,
+      goToToday,
       currentStreak,
+      todayResult.isActive,
     ],
   );
 

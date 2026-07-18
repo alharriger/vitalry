@@ -14,6 +14,9 @@ export { Wordmark, type WordmarkProps } from './ui/Wordmark';
 export { Mark, type MarkProps, type MarkVariant } from './ui/Mark';
 export { Logo, type LogoProps } from './ui/Logo';
 
+// Day browser
+export { DateNav, type DateNavProps } from './day/DateNav';
+
 // Goals (signature)
 export { GoalRow, type GoalRowProps } from './goals/GoalRow';
 export { Stepper, type StepperProps } from './goals/Stepper';
