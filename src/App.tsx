@@ -5,6 +5,7 @@ import { Placeholder } from './screens/Placeholder';
 import { SignInScreen } from './screens/SignInScreen';
 import { AuthCallback } from './screens/AuthCallback';
 import { AuthProvider, useAuth } from './lib/auth';
+import { Logo } from './components';
 
 /**
  * App shell. AuthProvider wraps everything; AuthGate renders the sign-in wall
@@ -26,9 +27,7 @@ function Splash() {
   return (
     <main className="vt-signin">
       <div className="vt-signin__card">
-        <span className="vt-signin__mark" aria-hidden="true">
-          <i className="ph-bold ph-leaf" />
-        </span>
+        <Logo orientation="stacked" size="xl" />
       </div>
     </main>
   );

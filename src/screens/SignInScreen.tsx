@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Button } from '../components';
+import { Button, Logo } from '../components';
 import { useAuth } from '../lib/auth';
 import './SignInScreen.css';
 
@@ -30,10 +30,9 @@ export function SignInScreen() {
   return (
     <main className="vt-signin">
       <div className="vt-signin__card">
-        <span className="vt-signin__mark" aria-hidden="true">
-          <i className="ph-bold ph-leaf" />
-        </span>
-        <h1 className="vt-signin__title">Vitalry</h1>
+        <h1 className="vt-signin__title">
+          <Logo orientation="stacked" size="xl" tagline />
+        </h1>
 
         {status === 'sent' ? (
           <div className="vt-signin__sent" role="status">

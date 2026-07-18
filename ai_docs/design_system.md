@@ -19,8 +19,12 @@ review, not a copy of the guide.
   marks a missed goal. No calories/miles/weights/body-comp framing anywhere, ever.
 - **Motion:** springy but instant (tap scale 0.96 ~120ms, transitions 220ms ease-out); respect
   `prefers-reduced-motion`. Visible 3px warm-green focus ring everywhere.
-- **No invented logo.** Wordmark only ("Vitalry." with light-green period) until a real mark
-  is provided.
+- **Brand logo (provided 2026-07-18).** The **high-five mark** (two hands = a high-five, a V, a
+  sprout; three-stroke spark on top) + the **"Vitalry." wordmark** (Bricolage 800, light-green
+  `--green-500` period) + "Fit Friends & Fam" tagline. Source SVGs live in `src/assets/brand/`
+  (`README.md` documents each). In-app, always use the components — `<Logo>` (lockup),
+  `<Mark>` (mark, `full`/`reverse`/`mono`), `<Wordmark>` — never re-draw or recolor the mark
+  outside the palette, rotate it, or drop the spark. Don't invent an alternate mark.
 
 ## Voice quick reference
 
