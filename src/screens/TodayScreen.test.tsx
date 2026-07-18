@@ -30,6 +30,7 @@ vi.mock('../lib/dailyLogs', () => ({
     scoringRules: null,
   })),
   loadUserLogs: vi.fn(async () => ({})),
+  updateProfileTimezone: vi.fn(async () => {}),
   upsertDayLog: (...args: unknown[]) => upsertDayLog(...args),
 }));
 
