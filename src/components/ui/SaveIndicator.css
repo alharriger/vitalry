@@ -1,0 +1,31 @@
+.vt-save {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  min-height: 20px;
+  color: var(--text-muted);
+  transition: color 220ms var(--ease-out);
+}
+.vt-save [class*="ph-"] { font-size: 18px; }
+
+/* Idle: reserve the row's height so nothing jumps when a status appears. */
+.vt-save--idle { visibility: hidden; }
+
+.vt-save--saving { color: var(--text-muted); }
+.vt-save--saved { color: var(--success); }
+.vt-save--error { color: var(--flame-600); } /* warm, not alarm-red — never shame */
+
+@keyframes vt-save-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.vt-save--saving [class*="ph-"] {
+  animation: vt-save-pulse 1.2s var(--ease-in-out) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-save--saving [class*="ph-"] { animation: none; }
+}

@@ -3,13 +3,13 @@
 > Cross-session handoff doc. Documents the **current phase only**; refresh when a phase
 > completes. Read this first every session.
 
-## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.2 is next**)
+## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.3 is next**)
 
 **Status:** Phase 1 merged to `main` (PR #2, `6b4ce5e`). Phase 2 is **planned and broken into
 five independently-shippable steps (2.1–2.5)**, each run as its own full lifecycle by a separate
 Claude instance (Amber's choice, 2026-07-17). The finished date-nav/day-view design has been
-absorbed (see shared context). **Step 2.1 (scoring engine) is DONE** — see its section below.
-**Start the next session at Step 2.2.**
+absorbed (see shared context). **Steps 2.1 (scoring engine) and 2.2 (Today on live `daily_logs`
++ autosave) are DONE** — see their sections below. **Start the next session at Step 2.3.**
 
 ---
 
@@ -107,7 +107,31 @@ absorbed (see shared context). **Step 2.1 (scoring engine) is DONE** — see its
   scores" readout to confirm the contract before it's baked into UI. No app/deploy impact.
 - **Deps:** none.
 
-### Step 2.2 — Today on live `daily_logs` + autosave
+### Step 2.2 — Today on live `daily_logs` + autosave — ✅ **DONE (2026-07-18)**
+- **Shipped:** `src/lib/dailyLogs.ts` (find active competition, load the viewer's logs, upsert a
+  day on `onConflict competition_id,user_id,local_date`); `src/lib/useTodayLog.tsx` — a **context
+  provider + hook** so Today and the tab-bar dot share ONE fetch (profile/comp/logs), owns today's
+  editable state, coalesced autosave (one upsert in flight, re-sends if state changed mid-write),
+  and the real engine-computed day score + current streak; `SaveIndicator` component
+  (Saving… / All saved / Couldn't save — retrying); `TodayScreen` rewritten onto live data + the
+  2.1 engine with a warm empty state; `AppLayout` wraps the shell in `TodayLogProvider`.
+  **`sampleData.ts` deleted.** `scripts/seed-dev-competition.ts` + `npm run seed:dev` (idempotent,
+  service_role; via `vite-node` + `process.loadEnvFile()`).
+- **Seed ran against the live project:** Harriger Family group + Amber (organizer) + an **active**
+  "Harriger Summer Streak" competition, `scoring_rules = DEFAULT_SCORING_RULES`, `start_date` =
+  seed day. Minimal — history backfill is 2.4.
+- **Gates:** typecheck/lint green (only the pre-existing fast-refresh warning), 62 unit + 3 e2e
+  green, security review PASS (service_role confined to the server-only seed; writes rely on Phase-1
+  RLS). Code review: streak-flame fix — an **in-progress today no longer zeroes a live streak**
+  (count the perfect run through the last *completed* day; a perfect today extends it). Confirm the
+  feel in 2.4 once there's real history to show it.
+- **For 2.3:** `useTodayLog` is **today-only** by design — 2.3 introduces `viewedDate` + the
+  reusable day-browser and grows this hook (load/edit yesterday within grace). E2E stubs live in
+  `dailyLogs.ts` behind `VITE_E2E` (mirrors the `auth.tsx` bypass) — extend them if 2.3 adds reads.
+  Note: Auth **Site URL is `https://vitalry.xyz`**, so local email-link sign-in redirects to prod —
+  test via the live deploy or the mailer-free `admin.generateLink` flow (pitfalls.md).
+
+### Step 2.2 (original plan) — Today on live `daily_logs` + autosave
 - **Goal:** Today reads/writes the real backend for **today only**; the Phase 0 reload-reset fix.
 - **Files:** `src/lib/dailyLogs.ts` (find viewer's active competition — status='active' in a group
   they belong to; load their logs for it; **upsert** a day's `goal_states` `onConflict

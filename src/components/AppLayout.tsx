@@ -1,7 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TabBar, type TabItem } from './ui/TabBar';
-import { SAMPLE_YOU } from '../lib/sampleData';
-import { GOAL_COUNT } from '../lib/goals';
+import { TodayLogProvider, useTodayLog } from '../lib/useTodayLog';
 import './AppLayout.css';
 
 const TABS: TabItem[] = [
@@ -13,30 +12,42 @@ const TABS: TabItem[] = [
 
 /**
  * The four-tab app shell: a scrollable screen area with a pinned bottom tab
- * bar. The Today tab shows a pending-action dot until the viewer hits an
- * active day (6+/9). Tabs are the four primary routes; Setup / Onboarding /
- * Results / Settings render outside this layout as full-screen flows.
+ * bar. TodayLogProvider wraps the whole shell so Today and the tab bar's
+ * pending-dot share one live fetch of the viewer's day. Tabs are the four
+ * primary routes; Setup / Onboarding / Results / Settings render outside this
+ * layout as full-screen flows.
  */
 export function AppLayout() {
+  return (
+    <TodayLogProvider>
+      <div className="vt-app">
+        <main className="vt-app__screen">
+          <Outlet />
+        </main>
+        <ShellTabBar />
+      </div>
+    </TodayLogProvider>
+  );
+}
+
+/** The bottom tab bar, with Today's dot driven by the live check-in state. */
+function ShellTabBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const active = location.pathname.split('/')[1] || 'today';
 
-  // Scaffold: flag Today until the viewer reaches an active day (6+ of 9).
-  const checkinPending = SAMPLE_YOU.doneToday < Math.ceil((GOAL_COUNT * 2) / 3);
-  const tabs = TABS.map((t) => (t.key === 'today' ? { ...t, dot: checkinPending } : t));
+  // Flag Today until the viewer reaches an active day (6+/9). While loading /
+  // with no competition, nothing is pending.
+  const { checkinPending, loading, noCompetition } = useTodayLog();
+  const dot = checkinPending && !loading && !noCompetition;
+  const tabs = TABS.map((t) => (t.key === 'today' ? { ...t, dot } : t));
 
   return (
-    <div className="vt-app">
-      <main className="vt-app__screen">
-        <Outlet />
-      </main>
-      <TabBar
-        className="vt-app__tabbar"
-        items={tabs}
-        active={active}
-        onChange={(key) => navigate(`/${key === 'today' ? '' : key}`)}
-      />
-    </div>
+    <TabBar
+      className="vt-app__tabbar"
+      items={tabs}
+      active={active}
+      onChange={(key) => navigate(`/${key === 'today' ? '' : key}`)}
+    />
   );
 }
