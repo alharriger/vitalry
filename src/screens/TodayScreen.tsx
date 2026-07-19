@@ -1,4 +1,4 @@
-import { Badge, Button, Card, DateNav, DayRecordRow, DayScore, GoalRow, SaveIndicator, Stepper, StreakFlame } from '../components';
+import { Badge, Button, Card, DateNav, DayRecordRow, DayScore, GoalRow, MonthSheet, SaveIndicator, Stepper, StreakFlame } from '../components';
 import { DAILY_9, GOAL_COUNT, isGoalDone } from '../lib/goals';
 import { useTodayLog } from '../lib/useTodayLog';
 import type { GoalStates } from '../types';
@@ -50,6 +50,15 @@ export function TodayScreen() {
     stepPrev,
     stepNext,
     goToToday,
+    selectDate,
+    competition,
+    today,
+    finalDate,
+    classByDate,
+    isDayEditable,
+    pickerOpen,
+    openPicker,
+    closePicker,
     currentStreak,
   } = useTodayLog();
 
@@ -105,7 +114,24 @@ export function TodayScreen() {
         canNext={canStepNext}
         onPrev={stepPrev}
         onNext={stepNext}
+        onOpenPicker={openPicker}
       />
+
+      {competition ? (
+        <MonthSheet
+          open={pickerOpen}
+          onClose={closePicker}
+          onSelect={selectDate}
+          startDate={competition.startDate}
+          finalDate={finalDate}
+          today={today}
+          viewedDate={viewedDate}
+          classByDate={classByDate}
+          dayNumber={dayNumber}
+          totalDays={totalDays}
+          isEditable={isDayEditable}
+        />
+      ) : null}
 
       {isEditable ? (
         <EditableDay

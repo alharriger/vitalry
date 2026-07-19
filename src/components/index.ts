@@ -17,6 +17,7 @@ export { Logo, type LogoProps } from './ui/Logo';
 // Day browser
 export { DateNav, type DateNavProps } from './day/DateNav';
 export { DayRecordRow, type DayRecordRowProps } from './day/DayRecordRow';
+export { MonthSheet, type MonthSheetProps } from './day/MonthSheet';
 
 // Goals (signature)
 export { GoalRow, type GoalRowProps } from './goals/GoalRow';
