@@ -64,6 +64,37 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   required before any real user (family) can receive links.
 - **Status:** Active
 
+## Timezone-dependent code passed locally (America/New_York) but failed CI (UTC)
+- **What happened:** 2.3 added a tz-sync path that calls `updateProfileTimezone` only when
+  the device zone differs from the stored profile zone. The `TodayScreen.test.tsx` `vi.mock`
+  of `dailyLogs` didn't export that new function. Locally (machine tz = `America/New_York`,
+  matching the mock's profile tz) the branch never fired, so the suite passed; CI runs in UTC,
+  the branch fired, and the mock threw "No `updateProfileTimezone` export is defined".
+- **Root cause:** A test module-mock that omitted an export the code under test now imports,
+  combined with a branch that only executes when the runtime tz differs from a fixture tz —
+  invisible on a machine whose tz happens to match the fixture.
+- **Prevention rule:** When a `vi.mock('…')` factory replaces a module, it must return **every**
+  export the code under test imports — add the new one the moment you add the import. For any
+  code whose behavior depends on the local clock/zone, run the suite under a non-local zone
+  (`TZ=UTC npm test`) before pushing; CI is UTC.
+- **Status:** Active
+
+## Single-use magic links consumed by link previews before they could be opened
+- **What happened:** Testing 2.3 on a phone, mailer-free `admin.generateLink` sign-in links
+  failed repeatedly with "Email link is invalid or has expired" — even freshly minted ones. A
+  headless fetch of a fresh link proved the flow worked (303 → `/auth/callback#access_token=…`),
+  so the token was valid at mint but **already consumed** by the time the phone opened it.
+- **Root cause:** Magic-link tokens are single-use. Delivering one through a channel that
+  generates URL previews (iMessage, most chat apps) makes the previewer **fetch the URL to build
+  the card**, which burns the token before any human taps it.
+- **Prevention rule:** Never deliver a single-use magic link through a link-previewing channel.
+  For phone/preview testing use the **preview-gated dev password sign-in** (persisted session, no
+  link) — or if a link is unavoidable, paste it **directly into Safari's address bar** (or scan a
+  QR), never via Messages. The redirect origin must also be on the Supabase allow-list, and note
+  `*.pages.dev` does NOT match a two-label host like `<branch>.vitalry.pages.dev` — allow-list
+  `*.vitalry.pages.dev` explicitly.
+- **Status:** Active
+
 ## Affordance copy shown for a non-existent feature (grace-window hint)
 - **What happened:** The Phase 0 Today screen shows "Yesterday is still editable until
   midnight," but there is no way to reach yesterday — it's a static hint with no backing

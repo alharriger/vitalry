@@ -3,13 +3,14 @@
 > Cross-session handoff doc. Documents the **current phase only**; refresh when a phase
 > completes. Read this first every session.
 
-## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.3 is next**)
+## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.4 is next**)
 
 **Status:** Phase 1 merged to `main` (PR #2, `6b4ce5e`). Phase 2 is **planned and broken into
 five independently-shippable steps (2.1–2.5)**, each run as its own full lifecycle by a separate
 Claude instance (Amber's choice, 2026-07-17). The finished date-nav/day-view design has been
-absorbed (see shared context). **Steps 2.1 (scoring engine) and 2.2 (Today on live `daily_logs`
-+ autosave) are DONE** — see their sections below. **Start the next session at Step 2.3.**
+absorbed (see shared context). **Steps 2.1 (scoring engine), 2.2 (Today on live `daily_logs`
++ autosave), and 2.3 (yesterday editable + grace lock) are DONE** — see their sections below.
+**Start the next session at Step 2.4.**
 
 ---
 
@@ -152,7 +153,47 @@ absorbed (see shared context). **Steps 2.1 (scoring engine) and 2.2 (Today on li
 - **Gotchas:** apply nothing to schema here. The Supabase workbox rule is NetworkOnly — confirm the
   upsert path is never served from the SPA cache.
 
-### Step 2.3 — Yesterday editable + grace lock
+### Step 2.3 — Yesterday editable + grace lock — ✅ **DONE (2026-07-18, PR #3)**
+- **Shipped:** the reusable **`DateNav`** "step and open" control (`src/components/day/DateNav.tsx`
+  + `.css`; prev floored at yesterday, next ceiled at today, centre date **label** — wired for the
+  2.5 picker via `onOpenPicker`, caption `Day N of M · today`). `useTodayLog` grew a `viewedDate`
+  + per-editable-day **coalesced autosave** (same one-in-flight/re-send guarantees as 2.2, now
+  keyed by date) + `stepPrev/stepNext/goToToday`. New pure helper `src/lib/dayNav.ts`
+  (`stepBounds`, `dayNumber`, `isEditableDay`) with 11 unit tests. `TodayScreen` renders the
+  check-in for the viewed day (today **or** yesterday, both editable) and the grace copy is now a
+  real affordance ("Yesterday is still editable until midnight" on today; "This day is still
+  editable until midnight" on yesterday). Because prev is **capped at yesterday this step**, no
+  read-only day is reachable yet — that's 2.4, so 2.3 needed no read-only rendering.
+- **Grace lock (server-side):** migrations **0005** (`enforce_grace_window` `BEFORE INSERT/UPDATE`
+  trigger on `daily_logs`) + **0006** (fails safe on a malformed tz). Rejects any write outside
+  today/yesterday **in the writer's own `profiles.timezone`**, gated on `auth.uid()` so
+  service-role seeds/backfills (2.4) bypass it. Both applied to the live project via `db push` and
+  verified by the live-DB suite.
+- **Context-aware clock (Amber's callout):** the day boundary uses the **committed**
+  `profiles.timezone` (the same column the trigger reads, so client + server can never disagree on
+  "today"); the device zone is synced to the profile for convergence on the *next* session. "Today"
+  re-derives on window focus / visibilitychange so an app left open across local midnight rolls
+  over; the greeting hour is tz-aware.
+- **Gates:** typecheck/lint green (only the pre-existing fast-refresh warnings); **73 unit** (11 new
+  `dayNav`) + **4 e2e** (new step-to-yesterday) + **9 live-DB** (6 new grace-trigger: allow
+  today/yesterday, reject 2-days-ago/future/out-of-window UPDATE, service-role bypass) all green;
+  prod build green. **Code review:** 5 low findings — fixed the tz desync (use committed zone), the
+  invalid-tz trigger foot-gun (0006), and a dead `onClick` guard; the dev-sign-in surface was
+  deferred to the security gate. **Security review: PASS** — no High/Medium (the trigger is
+  injection-safe & restriction-only; the dev password path is credential-checked with no embedded
+  secret; the tz write is RLS-scoped). `scoring.ts` untouched → no contract re-run needed.
+- **Retro:** the hard part wasn't the feature — it was **phone testing**. Magic links kept dying
+  because link previews (iMessage) consume the single-use token; solved durably with a
+  preview-gated **dev password sign-in** (persisted session) + `npm run devlink`. Also caught a
+  tz-dependent CI-only failure (local NY passed, CI UTC failed on an incomplete test mock). Both
+  logged to `pitfalls.md`. Dev competition **backdated to 2026-07-16** so there was an editable
+  yesterday to test against (2.2 seeded it starting "today").
+- **For 2.4:** `useTodayLog` already exposes `goToToday` and everything keyed by `viewedDate`;
+  uncap `stepBounds`' floor to `start_date` (one-line change in `dayNav.ts`) and add the read-only
+  day view + missed-day view. The service-role backfill writes past days freely (grace trigger
+  bypassed when `auth.uid()` is null — proven by the live test). Reuse `DateNav` as-is.
+
+### Step 2.3 (original plan) — Yesterday editable + grace lock
 - **Goal:** reach & edit yesterday; enforce the grace window for real.
 - **Files:** introduce the reusable **day-browser** scaffold in `TodayScreen` (`viewedDate` state +
   prev/next **step arrows** per the handoff "step and open" — but **capped this step**: prev
@@ -242,10 +283,19 @@ shipped`" above and clear the docs in that step's cleanup. (Same disposition app
 - **Delete `src/lib/sampleData.ts`** — folded into Step **2.2**.
 - **Phase 6:** trim Phosphor's unused ttf/woff/svg fallbacks so they aren't emitted to `dist`.
 
-## Verifying magic-link sign-in without email (mailer-free)
-`admin.generateLink({ type:'magiclink', email, options:{ redirectTo:'http://localhost:5173/auth/callback' }})`
-with the service_role key returns a single-use `action_link` (no email, no rate limit). Click it on
-the machine running `npm run dev`. This is how Phase 1's exit gate was demonstrated end-to-end.
+## Testing sign-in without email (fast paths — added 2.3)
+- **Preview/phone testing → use the dev password sign-in** (best; added 2.3). On any
+  `localhost` / `*.pages.dev` origin the SignInScreen shows a **"Developer sign-in (preview only)"**
+  section (never renders on `vitalry.xyz`). Amber's account has a dev password (`vitalry-dev`);
+  sign in once and the session **persists** for weeks. This is the reliable path — magic links get
+  consumed by link previews before a phone can open them (`pitfalls.md`).
+- **`npm run devlink`** mints a mailer-free `admin.generateLink` magic link (no email, no rate
+  limit) pointing at the branch preview by default; `-- <email> <origin>` targets localhost/another
+  account. Single-use: **paste it straight into Safari's address bar**, never via Messages.
+- **Redirect allow-list** now includes `https://*.vitalry.pages.dev/**` (the old `*.pages.dev`
+  didn't match the two-label preview host). Auth Site URL is still `https://vitalry.xyz`.
+- Phase 1's mailer-free method (`admin.generateLink` opened on the `npm run dev` machine) still
+  works for desktop/localhost.
 
 ## Phase 1 — DONE (for reference)
 Shipped: 6-table Postgres schema (`profiles`, `groups`, `group_members`, `competitions`, `goals`,
@@ -257,8 +307,10 @@ fallback; keep-alive GitHub Action (every 3 days). All three merge gates passed 
 sign-in test. Detail lives in `architecture.md` + the migration files.
 
 ## Standing handoff notes
-- Scripts: `npm run dev` (:5173) · `npm run build` · `npm test` · `npm run test:e2e` ·
-  `npm run test:rls` (live DB + `.env` service_role; not in CI) · `npm run lint` · `npm run typecheck`.
+- Scripts: `npm run dev` (:5173) · `npm run build` · `npm test` (run `TZ=UTC npm test` before
+  pushing tz-sensitive changes — CI is UTC, `pitfalls.md`) · `npm run test:e2e` ·
+  `npm run test:rls` (live DB + `.env` service_role; not in CI) · `npm run lint` · `npm run typecheck` ·
+  `npm run seed:dev` · `npm run devlink` (mailer-free sign-in link).
 - **Supabase migrations:** author SQL in `supabase/migrations/`, then apply with
   `supabase db push` (needs `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_DB_PASSWORD` in `.env`).
   Never paste into the dashboard SQL editor — a partial error rolls the whole batch back silently
