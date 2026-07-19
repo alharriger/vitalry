@@ -120,15 +120,19 @@
 }
 
 /* Missed-day marker — a soft "nothing here" placeholder, never a failure. */
+/* Tracks the read-only DayScore's fluid diameter so a logged day and a missed
+   day keep identical hero footprints at every viewport width. */
 .today__missed-marker {
-  width: 132px; height: 132px;
+  width: clamp(116px, 34vw, 152px);
+  height: clamp(116px, 34vw, 152px);
   border-radius: 50%;
   border: 3px dashed var(--border-strong);
   background: var(--surface-tint);
   display: grid; place-items: center;
   color: var(--goal-sleep);
+  container-type: size;
 }
-.today__missed-marker [class*="ph-"] { font-size: 52px; }
+.today__missed-marker [class*="ph-"] { font-size: 40cqmin; }
 .today__missed-title {
   font-family: var(--font-display);
   font-weight: var(--fw-extra);

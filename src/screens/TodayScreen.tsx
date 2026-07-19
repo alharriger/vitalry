@@ -154,7 +154,7 @@ function EditableDay({
   return (
     <>
       <div className="today__hero">
-        <DayScore done={doneCount} total={GOAL_COUNT} points={viewedResult.total} size={172} thickness={15} />
+        <DayScore done={doneCount} total={GOAL_COUNT} points={viewedResult.total} size={172} thickness={15} renderSize="clamp(150px, 44vw, 200px)" />
         <div className={`today__hero-caption${perfect ? ' today__hero-caption--perfect' : ''}`}>
           {perfect ? (
             <>
@@ -249,7 +249,7 @@ function ReadOnlyDay({
             </>
           ) : (
             <>
-              <DayScore done={doneCount} total={GOAL_COUNT} size={132} thickness={13} />
+              <DayScore done={doneCount} total={GOAL_COUNT} size={132} thickness={13} renderSize="clamp(116px, 34vw, 152px)" />
               <div className="today__readonly-caption">Logged that day</div>
             </>
           )}
