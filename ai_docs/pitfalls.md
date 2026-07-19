@@ -95,6 +95,22 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   `*.vitalry.pages.dev` explicitly.
 - **Status:** Active
 
+## Full-viewport background left a seam behind the status bar (canvas painting)
+- **What happened:** The read-only day tints the whole screen. Putting the tint on the app column
+  (`.vt-app`) left the strip behind the iOS status bar the old color. Moving it to `<body>` fixed the
+  **installed PWA** but the **Safari browser tab** still showed the old color at the very top. Only
+  tinting the root `<html>` element fixed both.
+- **Root cause:** With `viewport-fit=cover`, the area behind the status bar (the safe-area inset) is
+  the viewport **canvas**, whose color comes from CSS background propagation — and the source differs
+  by display mode: the installed PWA propagates from `<body>`, but a browser tab paints it from the
+  **root `<html>`** background. A nested element (`.vt-app`) never covers the canvas, and `<body>`
+  only covers it in standalone.
+- **Prevention rule:** A background meant to fill the **entire viewport** (edge-to-edge, incl. the
+  status-bar / safe-area strip) must be set on the **root `<html>` element** — set it on `<body>` and
+  `<html>` both to be safe, never only on a nested app container. Test any full-bleed background in
+  **both** the installed PWA and a browser tab; they paint the canvas from different elements.
+- **Status:** Active
+
 ## Handed Amber a phone manual-test before the branch was pushed to a preview
 - **What happened:** 2.4 uncapped day-stepping and all automated gates were green, but when Amber
   tested on her phone she still couldn't step past yesterday. The fix existed only in the local
