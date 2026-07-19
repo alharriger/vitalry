@@ -139,3 +139,20 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   rule ("Yesterday stays editable until midnight" as passive info) until the feature exists.
   Grace-window navigation is a Phase 2 build item (see product roadmap).
 - **Status:** Active
+
+## Playwright `page.mouse` at coords read from `boundingBox()` mid-animation misses the target
+- **What happened:** The 2.5 month-sheet swipe-to-dismiss e2e test kept failing — the sheet stayed
+  open. The drag code was fine on a real phone; the *test* was pressing empty space. The sheet rises
+  with a 340ms CSS animation, and `locator.boundingBox()` read during it returned the still-moving
+  (lower) position (y≈805 in a 839px viewport), so `page.mouse.down()` at that y landed below the
+  settled sheet (y≈531) and never hit the drag handle.
+- **Root cause:** `locator.click()` auto-waits for the element to be stable (stops animating) as part
+  of actionability, but low-level `page.mouse.move/down/up` at **manually computed coordinates** does
+  NOT — it clicks wherever you tell it, using a box that may be stale. Any coordinate-based Playwright
+  interaction on an animated/transitioning element is subject to this.
+- **Prevention rule:** Before driving `page.mouse` (or `dispatchEvent`) at coordinates from
+  `boundingBox()`, wait for the element to settle — poll `boundingBox()` until two consecutive reads
+  match, or wait out the known animation duration. Prefer `locator.click()`/`dragTo()` (which
+  auto-wait) whenever the interaction allows it; only drop to raw `page.mouse` for gestures they can't
+  express (e.g. a partial swipe), and settle first.
+- **Status:** Active
