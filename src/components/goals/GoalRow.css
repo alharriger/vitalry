@@ -87,6 +87,9 @@
   border: 2px solid var(--_c);
   transition: background var(--dur-fast) var(--ease-out);
 }
+/* Neutralise the base 44px hover fill (equal specificity, source-order-fragile)
+   so only the 34px ::before ring shows the hover accent. */
+.vt-goal--counter .vt-stepper__btn:hover:not(:disabled) { background: none; }
 .vt-goal--counter .vt-stepper__btn:hover:not(:disabled)::before {
   background: color-mix(in srgb, var(--_c) 12%, transparent);
 }

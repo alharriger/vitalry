@@ -3,14 +3,15 @@
 > Cross-session handoff doc. Documents the **current phase only**; refresh when a phase
 > completes. Read this first every session.
 
-## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.4 is next**)
+## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.5 is next**)
 
 **Status:** Phase 1 merged to `main` (PR #2, `6b4ce5e`). Phase 2 is **planned and broken into
 five independently-shippable steps (2.1–2.5)**, each run as its own full lifecycle by a separate
 Claude instance (Amber's choice, 2026-07-17). The finished date-nav/day-view design has been
 absorbed (see shared context). **Steps 2.1 (scoring engine), 2.2 (Today on live `daily_logs`
-+ autosave), and 2.3 (yesterday editable + grace lock) are DONE** — see their sections below.
-**Start the next session at Step 2.4.**
++ autosave), 2.3 (yesterday editable + grace lock), and 2.4 (browse past days: read-only +
+missed) are DONE** — see their sections below. **Start the next session at Step 2.5** (the only
+step left in Phase 2 — the month-sheet picker; it makes the centre date button tappable).
 
 ---
 
@@ -216,7 +217,41 @@ absorbed (see shared context). **Steps 2.1 (scoring engine), 2.2 (Today on live 
 - **Gotchas:** apply the migration with `supabase db push` and **verify** — never a dashboard paste
   (pitfalls.md). The trigger must not block service_role (auth.uid() is null there).
 
-### Step 2.4 — Browse past days: read-only + missed  *(handoff frames 2c, 2d)*
+### Step 2.4 — Browse past days: read-only + missed — ✅ **DONE (2026-07-19)**
+- **Shipped:** `stepBounds` floor lowered to `start_date` (prev now reaches day 1; +tests). New
+  non-interactive **`DayRecordRow`** (frame 2c; plain `<div>`, no button/hover/press, done disc =
+  goal color / not-done sunken, "Done" / "Not logged"; exported for Phase 5). `TodayScreen` branches
+  editable vs read-only: lock banner, `DayScore` 132, "What was logged" records, "Back to today";
+  **missed-day** view (moon-stars marker + "Nothing logged this day", never red/failed) for a
+  `doneCount === 0` day. Seed backfills the comp to `today−21 … +30` (today = "Day 22 of 30") with a
+  varied 3-week history incl. one fully-missed day; idempotent repair realigns an existing comp's
+  dates. Ran against the live project.
+- **Design-pass refinements (Amber's design session, folded into this step):** compact-inline
+  counter steppers that read 34px but keep the **44px tap target** (visible ring via `::before`) with
+  wrapping titles; 4-bucket greeting (incl. night) on one fluid line, muted **"Looking back"** header
+  on locked days (same slot so `DateNav` never shifts); whole-screen read-only tint + content
+  desaturation; one unified lock-banner string; **fluid `DayScore`** (`renderSize` clamp + cq-unit
+  numerals, numeric API unchanged).
+- **Gates:** typecheck/lint clean (only the pre-existing fast-refresh warnings); **73 unit + 5 e2e**
+  (new: step to a read-only past day) + prod build green. **Code review:** 4 findings — fixed the
+  counter-stepper hover specificity + a hard-coded `#fff` (→ `var(--white)`); left two low/dev-only
+  (fluid-ring ellipse only if a container is narrower than the clamp min — unreachable at
+  `--screen-max`; seed re-run leaves pre-start orphan rows — harmless, ignored by the engine).
+  **Security review: PASS** — presentational diff + server-only dev scripts; no auth/RLS/scoring
+  change, no injection, no new secret. `scoring.ts` untouched → no contract re-run.
+- **Retro:** the feature was quick; the time went to **read-only surface tinting** (three passes:
+  `.vt-app` → `<body>` → `<html>`, because `viewport-fit=cover` paints the status-bar strip from a
+  different element in the installed PWA vs a browser tab — logged to `pitfalls.md`) and to a
+  **testing-env gap** (the first phone test hit stale/`main` code because the branch wasn't pushed).
+  That second miss triggered a **workflow reprogram** (this session): a Testability gate before every
+  manual-test pause, `ai_docs/testing_runbook.md`, `npm run preview:url` / `dev:host`, and a fixed
+  handoff template (see `pitfalls.md` + the memory `working-loop`).
+- **For 2.5:** everything is keyed by `viewedDate`; `DateNav` already accepts `onOpenPicker` (wire the
+  centre button to open the month sheet). Reuse the 2.1 `dayClass` for cell fills and the fluid-hero
+  clamp pattern if the sheet shows a mini score. The dev DB already has 3 weeks of varied history +
+  future days for the heatmap.
+
+### Step 2.4 (original plan) — Browse past days: read-only + missed  *(handoff frames 2c, 2d)*
 - **Goal:** step back through the whole competition; view any day as a locked record; kind
   missed-day.
 - **Files:** uncap prev stepping to `start_date`. **Read-only day view** (lock banner; `DayScore`
