@@ -21,13 +21,17 @@ absorbed (see shared context). **Steps 2.1 (scoring engine), 2.2 (Today on live 
 2. **Read** this doc, `CLAUDE.md`, and the docs it points to (the design handoff for UI steps,
    the scoring contract below for 2.1).
 3. **Full software-development lifecycle for THIS step only** (the hard-rule loop):
-   plan → **Amber's approval** → new branch `phase-2.<n>-<slug>` → implement →
-   **manual-test pause** (Amber tests, usually on her phone) → **three merge gates** (e2e verify,
+   plan → **Amber's approval** → new branch `phase-2.<n>-<slug>` → implement → **Testability
+   gate** (push the branch so Cloudflare builds a preview, then get the exact URL with
+   `npm run preview:url`) → **manual-test pause** (Amber tests on her phone against that preview;
+   hand her the URL + dev-password sign-in + numbered steps) → **three merge gates** (e2e verify,
    code review, security review — proportionate to the diff) → commit/merge to `main`
    (auto-deploys to vitalry.xyz) → **mark the step DONE here + a one-line retro note** + log any
    pitfalls to `pitfalls.md`.
-4. Never skip the approval or the manual-test pause. Scoring changes re-run the 2.1 suite and log
-   the delta (scoring is a contract).
+4. Never skip the approval or the manual-test pause. **Never hand off a phone test while the change
+   is only local** — push first; her phone can't reach `localhost` and vitalry.xyz is `main`-only.
+   Full phone-testing procedure: `ai_docs/testing_runbook.md`. Scoring changes re-run the 2.1 suite
+   and log the delta (scoring is a contract).
 
 ## Shared context for every Phase 2 step
 
@@ -284,6 +288,8 @@ shipped`" above and clear the docs in that step's cleanup. (Same disposition app
 - **Phase 6:** trim Phosphor's unused ttf/woff/svg fallbacks so they aren't emitted to `dist`.
 
 ## Testing sign-in without email (fast paths — added 2.3)
+> **Canonical procedure now lives in `ai_docs/testing_runbook.md`** (added 2.4). The notes below
+> are the sign-in specifics it builds on.
 - **Preview/phone testing → use the dev password sign-in** (best; added 2.3). On any
   `localhost` / `*.pages.dev` origin the SignInScreen shows a **"Developer sign-in (preview only)"**
   section (never renders on `vitalry.xyz`). Amber's account has a dev password (`vitalry-dev`);
@@ -307,10 +313,11 @@ fallback; keep-alive GitHub Action (every 3 days). All three merge gates passed 
 sign-in test. Detail lives in `architecture.md` + the migration files.
 
 ## Standing handoff notes
-- Scripts: `npm run dev` (:5173) · `npm run build` · `npm test` (run `TZ=UTC npm test` before
-  pushing tz-sensitive changes — CI is UTC, `pitfalls.md`) · `npm run test:e2e` ·
-  `npm run test:rls` (live DB + `.env` service_role; not in CI) · `npm run lint` · `npm run typecheck` ·
-  `npm run seed:dev` · `npm run devlink` (mailer-free sign-in link).
+- Scripts: `npm run dev` (:5173) · `npm run dev:host` (LAN, phone on same Wi-Fi) · `npm run build` ·
+  `npm test` (run `TZ=UTC npm test` before pushing tz-sensitive changes — CI is UTC, `pitfalls.md`) ·
+  `npm run test:e2e` · `npm run test:rls` (live DB + `.env` service_role; not in CI) · `npm run lint` ·
+  `npm run typecheck` · `npm run seed:dev` · `npm run devlink` (mailer-free sign-in link) ·
+  `npm run preview:url` (Cloudflare branch-preview URL for phone testing).
 - **Supabase migrations:** author SQL in `supabase/migrations/`, then apply with
   `supabase db push` (needs `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_DB_PASSWORD` in `.env`).
   Never paste into the dashboard SQL editor — a partial error rolls the whole batch back silently

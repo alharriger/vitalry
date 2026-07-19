@@ -95,6 +95,23 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   `*.vitalry.pages.dev` explicitly.
 - **Status:** Active
 
+## Handed Amber a phone manual-test before the branch was pushed to a preview
+- **What happened:** 2.4 uncapped day-stepping and all automated gates were green, but when Amber
+  tested on her phone she still couldn't step past yesterday. The fix existed only in the local
+  working tree — unpushed and uncommitted. Her phone was hitting a deployed env (vitalry.xyz =
+  `main` = the 2.3 grace-cap, or an old `*.pages.dev` preview), none of which carried the new code.
+- **Root cause:** A structural gap between where new code lives and where Amber tests. The phone
+  cannot reach `localhost` (the `dev` script is plain `vite`, no `--host`), and vitalry.xyz only
+  ever runs `main`. So the ONLY phone-reachable env for branch code is a Cloudflare branch preview —
+  which requires a push. Our working loop pushed "when the feature is complete," i.e. *after* the
+  manual-test pause, guaranteeing the pause happened against stale code.
+- **Prevention rule:** The manual-test pause is not ready until the code is live where Amber will
+  test it. Before handing off a phone test, **push the branch, confirm the Cloudflare preview
+  built, and give her the exact preview URL** (see `ai_docs/testing_runbook.md`). Never say "test
+  it" while the change is only local. E2E green is the proxy that the feature *works*; the preview
+  is what makes it *reachable*. (PWA is `autoUpdate`, so a stale shell self-heals on one reload.)
+- **Status:** Active
+
 ## Affordance copy shown for a non-existent feature (grace-window hint)
 - **What happened:** The Phase 0 Today screen shows "Yesterday is still editable until
   midnight," but there is no way to reach yesterday — it's a static hint with no backing
