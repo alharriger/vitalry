@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mark } from '../components';
 import { useAuth } from '../lib/auth';
 import './SignInScreen.css';
 
@@ -45,9 +46,7 @@ export function AuthCallback() {
   return (
     <main className="vt-signin">
       <div className="vt-signin__card">
-        <span className="vt-signin__mark" aria-hidden="true">
-          <i className="ph-bold ph-leaf" />
-        </span>
+        <Mark variant="full" size={56} role="presentation" aria-hidden="true" />
         {showError ? (
           <>
             <p className="vt-signin__lead">That link didn't work</p>

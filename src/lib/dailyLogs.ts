@@ -61,6 +61,27 @@ export async function loadViewerProfile(userId: string): Promise<ViewerProfile> 
 }
 
 /**
+ * Sync the viewer's stored timezone to their device's actual IANA zone.
+ *
+ * The day boundary (today/yesterday, the grace window) is computed from
+ * `profiles.timezone` on BOTH the client and the server-side grace-window
+ * trigger — so the two must agree, or a legitimate edit could be rejected at the
+ * midnight edge. Keeping the stored zone in step with the device the player is
+ * actually on is what keeps "today" honest to their local clock. No-op when the
+ * zone is unchanged; there's no timezone-picker UI yet, so the device is the
+ * best available signal.
+ */
+export async function updateProfileTimezone(userId: string, timezone: string): Promise<void> {
+  if (E2E) return;
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ timezone })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+/**
  * Find the viewer's single active competition. RLS (`competitions_select`)
  * already scopes this to competitions in a group they belong to, so a plain
  * `status='active'` filter can only ever return their own. v1 assumes one

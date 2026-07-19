@@ -1,4 +1,4 @@
-import { Badge, Card, DayScore, GoalRow, SaveIndicator, Stepper, StreakFlame } from '../components';
+import { Badge, Card, DateNav, DayScore, GoalRow, SaveIndicator, Stepper, StreakFlame } from '../components';
 import { DAILY_9, GOAL_COUNT, isGoalDone } from '../lib/goals';
 import { useTodayLog } from '../lib/useTodayLog';
 import './TodayScreen.css';
@@ -9,13 +9,21 @@ function greeting(hour: number): string {
   return 'Good evening';
 }
 
+/** Friendly label for a `'YYYY-MM-DD'` local date, e.g. "Wednesday, Jul 22".
+ *  Parsed at local noon so the calendar date can't drift across a tz offset. */
+function dateLabel(localDate: string, opts?: Intl.DateTimeFormatOptions): string {
+  const d = new Date(`${localDate}T12:00:00`);
+  return d.toLocaleDateString(undefined, opts ?? { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
 /**
  * Today — the daily check-in. The home screen and 80% of the product.
  *
- * Phase 2.2: live on `daily_logs` for TODAY ONLY. Every tap optimistically
- * updates local state and autosaves (no Save button); the score is the real
- * 2.1 engine result (base + perfect + streak). Date navigation, yesterday
- * editing, and browsing past days arrive in 2.3–2.5.
+ * Phase 2.3: the day-browser reaches today + yesterday, both editable within the
+ * grace window. The DateNav steps between them (prev floored at yesterday, next
+ * ceiled at today); the hero + goals reflect the viewed day; edits autosave to
+ * `daily_logs` via the 2.1 engine. Read-only past days (2.4) and the month-sheet
+ * picker (2.5) are still to come — until then no read-only day is reachable.
  */
 export function TodayScreen() {
   const {
@@ -23,10 +31,19 @@ export function TodayScreen() {
     loadError,
     noCompetition,
     name,
-    todayState,
+    localHour,
+    viewedDate,
+    viewedState,
     setGoal,
     saveStatus,
-    todayResult,
+    viewedResult,
+    isToday,
+    dayNumber,
+    totalDays,
+    canStepPrev,
+    canStepNext,
+    stepPrev,
+    stepNext,
     currentStreak,
   } = useTodayLog();
 
@@ -61,24 +78,38 @@ export function TodayScreen() {
     );
   }
 
-  const doneCount = todayResult.doneCount;
-  const perfect = todayResult.isPerfect;
+  const doneCount = viewedResult.doneCount;
+  const perfect = viewedResult.isPerfect;
 
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  // Grace copy is now a REAL affordance (2.3): on today it points to yesterday;
+  // on yesterday it names the day being edited. Only shown when yesterday is
+  // actually reachable (a competition that started today has no yesterday).
+  const graceCopy = isToday
+    ? canStepPrev
+      ? 'Yesterday is still editable until midnight'
+      : null
+    : 'This day is still editable until midnight';
 
   return (
     <div>
       <header className="today__header">
-        <div>
-          <div className="today__greeting">{greeting(now.getHours())}, {name}</div>
-          <div className="today__date">{dateLabel}</div>
-        </div>
+        <div className="today__greeting">{greeting(localHour)}, {name}</div>
         <StreakFlame count={currentStreak} size="md" />
       </header>
 
+      <DateNav
+        label={dateLabel(viewedDate, { weekday: 'long', month: 'short', day: 'numeric' })}
+        dayNumber={dayNumber}
+        totalDays={totalDays}
+        isToday={isToday}
+        canPrev={canStepPrev}
+        canNext={canStepNext}
+        onPrev={stepPrev}
+        onNext={stepNext}
+      />
+
       <div className="today__hero">
-        <DayScore done={doneCount} total={GOAL_COUNT} points={todayResult.total} size={172} thickness={15} />
+        <DayScore done={doneCount} total={GOAL_COUNT} points={viewedResult.total} size={172} thickness={15} />
         <div className={`today__hero-caption${perfect ? ' today__hero-caption--perfect' : ''}`}>
           {perfect ? (
             <>
@@ -92,18 +123,19 @@ export function TodayScreen() {
       </div>
 
       <div className="today__statusbar">
-        {/* Phase 2.2: keep grace copy PASSIVE — reaching/editing yesterday is 2.3. */}
-        <div className="today__grace">
-          <i className="ph-bold ph-clock-countdown" aria-hidden="true" />
-          Grace window: yesterday stays editable until midnight
-        </div>
+        {graceCopy ? (
+          <div className="today__grace">
+            <i className="ph-bold ph-clock-countdown" aria-hidden="true" />
+            {graceCopy}
+          </div>
+        ) : null}
         <SaveIndicator status={saveStatus} />
       </div>
 
       <div className="today__goals">
         {DAILY_9.map((g) => {
           if (g.logType === 'counter') {
-            const value = typeof todayState[g.key] === 'number' ? (todayState[g.key] as number) : 0;
+            const value = typeof viewedState[g.key] === 'number' ? (viewedState[g.key] as number) : 0;
             return (
               <GoalRow
                 key={g.key}
@@ -130,8 +162,8 @@ export function TodayScreen() {
               target={g.target}
               icon={g.icon}
               color={g.color}
-              done={todayState[g.key] === true}
-              onToggle={() => setGoal(g.key, todayState[g.key] !== true)}
+              done={viewedState[g.key] === true}
+              onToggle={() => setGoal(g.key, viewedState[g.key] !== true)}
             />
           );
         })}

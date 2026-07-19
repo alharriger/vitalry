@@ -1,0 +1,88 @@
+/* "Step and open" date-navigation control (handoff: date-nav-day-view, Global).
+   Prev / date / next row + a caption line. Tokens only; 44px+ targets. */
+
+.vt-datenav {
+  margin: 4px 0 18px;
+}
+
+.vt-datenav__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Prev/next step circles — 44×44 hard floor. */
+.vt-datenav__step {
+  flex: 0 0 auto;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.vt-datenav__step i { font-size: 20px; }
+.vt-datenav__step:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.vt-datenav__step:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.vt-datenav__step:disabled {
+  border-color: var(--border-subtle);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  cursor: default;
+}
+
+/* Centre date — a label this phase; becomes the picker trigger in 2.5. */
+.vt-datenav__date {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--tap-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-subtle);
+  background: var(--surface-card);
+  padding: 0 12px;
+}
+.vt-datenav__date i { font-size: 19px; color: var(--evergreen); flex: 0 0 auto; }
+.vt-datenav__date span {
+  font-family: var(--font-body);
+  /* 16px honours the accessibility floor over the handoff's 15px (pitfalls). */
+  font-size: var(--text-base);
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vt-datenav__date--button {
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.vt-datenav__date--button:active { transform: scale(var(--press-scale)); }
+.vt-datenav__date--button:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+.vt-datenav__caption {
+  margin-top: 6px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-datenav__step,
+  .vt-datenav__date--button {
+    transition: none;
+  }
+  .vt-datenav__step:active:not(:disabled),
+  .vt-datenav__date--button:active {
+    transform: none;
+  }
+}

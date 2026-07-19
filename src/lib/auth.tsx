@@ -26,6 +26,13 @@ interface AuthState {
   loading: boolean;
   /** Send a magic link to `email`. Rejects on failure so the UI can show it. */
   signInWithOtp: (email: string) => Promise<void>;
+  /**
+   * Email+password sign-in. NOT a product feature — the app is passwordless for
+   * real users. This exists only for a dev-gated testing shortcut (see
+   * SignInScreen), so a preview/localhost session can be obtained without the
+   * magic-link email round-trip. Rejects on failure.
+   */
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -72,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: { id: 'e2e-user', email: 'e2e@vitalry.xyz' } as User,
         loading: false,
         signInWithOtp: async () => {},
+        signInWithPassword: async () => {},
         signOut: async () => {},
       };
     }
@@ -85,6 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
+        if (error) throw error;
+      },
+      signInWithPassword: async (email: string, password: string) => {
+        const supabase = getSupabase();
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
       signOut: async () => {

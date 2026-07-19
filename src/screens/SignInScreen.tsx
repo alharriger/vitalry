@@ -4,15 +4,47 @@ import { useAuth } from '../lib/auth';
 import './SignInScreen.css';
 
 /**
+ * True only on preview/local origins — never on the production domain. Gates the
+ * dev password sign-in so it can never appear to real users (who are
+ * passwordless). The bundle is identical across builds, so this is a runtime
+ * host check, not a build flag.
+ */
+function isDevOrigin(): boolean {
+  if (typeof window === 'undefined') return false;
+  const h = window.location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h.endsWith('.pages.dev');
+}
+
+/**
  * Passwordless sign-in. One field, one button: enter your email, get a magic
  * link, tap it. No design reference exists for auth (plan §8) — built on-brand
  * from tokens. Meets the hard rules: ≥16px body, 44px+ targets, WCAG AA.
  */
 export function SignInScreen() {
-  const { signInWithOtp } = useAuth();
+  const { signInWithOtp, signInWithPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [error, setError] = useState<string | null>(null);
+
+  // Dev-only testing shortcut (preview/localhost). Not shown to real users.
+  const devMode = isDevOrigin();
+  const [devEmail, setDevEmail] = useState('alharriger@gmail.com');
+  const [devPw, setDevPw] = useState('');
+  const [devBusy, setDevBusy] = useState(false);
+  const [devError, setDevError] = useState<string | null>(null);
+
+  async function handleDevSignIn(e: FormEvent) {
+    e.preventDefault();
+    setDevError(null);
+    setDevBusy(true);
+    try {
+      await signInWithPassword(devEmail.trim(), devPw);
+      // On success the auth listener swaps in the app; nothing else to do.
+    } catch (err) {
+      setDevBusy(false);
+      setDevError(err instanceof Error ? err.message : 'Sign-in failed.');
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -91,6 +123,54 @@ export function SignInScreen() {
             </Button>
           </form>
         )}
+
+        {devMode ? (
+          <details className="vt-signin__dev">
+            <summary>Developer sign-in (preview only)</summary>
+            <form className="vt-signin__form" onSubmit={handleDevSignIn} noValidate>
+              <label className="vt-signin__label" htmlFor="dev-email">
+                Email
+              </label>
+              <input
+                id="dev-email"
+                className="vt-signin__input"
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={devEmail}
+                onChange={(e) => setDevEmail(e.target.value)}
+              />
+              <label className="vt-signin__label" htmlFor="dev-pw">
+                Password
+              </label>
+              <input
+                id="dev-pw"
+                className="vt-signin__input"
+                type="password"
+                autoComplete="current-password"
+                value={devPw}
+                onChange={(e) => setDevPw(e.target.value)}
+              />
+              {devError ? (
+                <p className="vt-signin__error" role="alert">
+                  {devError}
+                </p>
+              ) : null}
+              <Button
+                type="submit"
+                variant="secondary"
+                size="lg"
+                block
+                icon="ph-bold ph-sign-in"
+                disabled={devBusy || devPw.length === 0}
+              >
+                {devBusy ? 'Signing in…' : 'Dev sign in'}
+              </Button>
+            </form>
+          </details>
+        ) : null}
       </div>
     </main>
   );
