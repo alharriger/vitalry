@@ -65,11 +65,35 @@
 .vt-goal--done .vt-goal__check { border-color: var(--_c); background: var(--_c); color: #fff; }
 .vt-goal__control { flex: none; display: flex; align-items: center; }
 
-/* Compact the trailing counter control's spacing/typography so counter rows
-   stay tight and the title never wraps — but keep the −/+ buttons at the full
-   44px touch-target floor (they're tapped daily on the rainbow/water goals). */
-.vt-goal__control .vt-stepper { gap: 2px; }
-.vt-goal__control .vt-stepper__btn { border-width: 2px; }
-.vt-goal__control .vt-stepper__btn .ph, .vt-goal__control .vt-stepper__btn [class*="ph-"] { font-size: 18px; }
-.vt-goal__control .vt-stepper__val { min-width: 24px; font-size: var(--text-lg); }
-.vt-goal__control .vt-stepper__val small { font-size: var(--text-xs); }
+/* --- Counter goal: compact-inline stepper (rainbow / water) --------------
+   The −/+ circles READ as 34px but keep a full 44px tap target — the a11y
+   floor is non-negotiable, so the visible ring is drawn by ::before inside a
+   44px button (padding-inflate would enlarge the visible disc). The title is
+   allowed to WRAP on counter rows so long names ("Eat the rainbow") never
+   truncate; the row simply grows. */
+.vt-goal--counter .vt-goal__control { margin-left: 8px; }
+.vt-goal--counter .vt-stepper { gap: 10px; }
+.vt-goal--counter .vt-stepper__btn {
+  width: var(--tap-min); height: var(--tap-min); /* 44px hit target */
+  border: none;
+  background: none;
+  position: relative;
+}
+.vt-goal--counter .vt-stepper__btn::before {
+  content: "";
+  position: absolute;
+  inset: 5px; /* 44 − 2×5 = the 34px visible circle */
+  border-radius: 50%;
+  border: 2px solid var(--_c);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.vt-goal--counter .vt-stepper__btn:hover:not(:disabled)::before {
+  background: color-mix(in srgb, var(--_c) 12%, transparent);
+}
+.vt-goal--counter .vt-stepper__btn:disabled { opacity: 0.32; }
+.vt-goal--counter .vt-stepper__btn .ph,
+.vt-goal--counter .vt-stepper__btn [class*="ph-"] { position: relative; font-size: 16px; }
+.vt-goal--counter .vt-stepper__val { min-width: 38px; font-size: var(--text-lg); }
+.vt-goal--counter .vt-stepper__val small { font-size: var(--text-sm); color: var(--text-muted); }
+.vt-goal--counter .vt-goal__name { font-size: var(--text-base); white-space: normal; line-height: 1.15; }
+.vt-goal--counter .vt-goal__target { font-size: var(--text-xs); white-space: normal; }

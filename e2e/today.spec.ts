@@ -57,8 +57,10 @@ test.describe('Today check-in', () => {
     await prev.click(); // yesterday (editable)
     await prev.click(); // two days ago (read-only)
 
-    // Unmistakably non-interactive: lock banner + a single "Back to today" action.
-    await expect(page.getByText(/looking back at a past day/i)).toBeVisible();
+    // Unmistakably non-interactive: muted "Looking back" header + lock banner +
+    // a single "Back to today" action.
+    await expect(page.getByText('Looking back')).toBeVisible();
+    await expect(page.getByText(/logging is locked/i)).toBeVisible();
     await expect(page.getByText('Nothing logged this day')).toBeVisible();
     await expect(page.getByText('What was logged')).toBeVisible();
     const backToToday = page.getByRole('button', { name: /Back to today/i });

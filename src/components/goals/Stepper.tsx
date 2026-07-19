@@ -15,8 +15,10 @@ type AccentStyle = CSSProperties & { '--_c'?: string };
 
 /**
  * Big-target −/+ number stepper — the logging control for count goals (water
- * cups, produce colors). 40px round buttons for easy one-handed / older-user
- * tapping; shows "value / max".
+ * cups, produce colors). 44px round buttons (the a11y touch floor) for easy
+ * one-handed / older-user tapping; shows "value / max". Inside a counter
+ * GoalRow the circle reads as a compact 34px while keeping the 44px tap target
+ * (see the `.vt-goal--counter` rules in GoalRow.css).
  */
 export function Stepper({
   value = 0,

@@ -5,9 +5,11 @@ import type { GoalStates } from '../types';
 import './TodayScreen.css';
 
 function greeting(hour: number): string {
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 5) return 'Good night'; // 00:00–04:59
+  if (hour < 12) return 'Good morning'; // 05:00–11:59
+  if (hour < 17) return 'Good afternoon'; // 12:00–16:59
+  if (hour < 22) return 'Good evening'; // 17:00–21:59
+  return 'Good night'; // 22:00–23:59
 }
 
 /** Friendly label for a `'YYYY-MM-DD'` local date, e.g. "Wednesday, Jul 22".
@@ -84,8 +86,13 @@ export function TodayScreen() {
 
   return (
     <div>
+      {/* One header slot on every day: the greeting on editable days, a muted
+          "Looking back" on locked past days. Same element/height so the DateNav
+          below never shifts position as you step between days. */}
       <header className="today__header">
-        <div className="today__greeting">{greeting(localHour)}, {name}</div>
+        <div className={`today__greeting${isEditable ? '' : ' today__greeting--muted'}`}>
+          {isEditable ? `${greeting(localHour)}, ${name}` : 'Looking back'}
+        </div>
         <StreakFlame count={currentStreak} size="md" />
       </header>
 
@@ -224,48 +231,51 @@ function ReadOnlyDay({
 
   return (
     <>
+      {/* One banner for every locked day, and it sits OUTSIDE .readonly-content
+          so it keeps its calm periwinkle tint while the record below desaturates. */}
       <div className="today__lock">
         <i className="ph-bold ph-lock-simple" aria-hidden="true" />
-        <span>{missed ? 'You are looking back at a past day.' : 'You are looking back at a past day. Nothing here can be tapped.'}</span>
+        <span>You're viewing a past day — logging is locked.</span>
       </div>
 
-      <div className="today__readonly-hero">
-        {missed ? (
-          <>
-            <div className="today__missed-marker" aria-hidden="true">
-              <i className="ph-bold ph-moon-stars" />
-            </div>
-            <div className="today__missed-title">Nothing logged this day</div>
-            <p className="today__missed-sub">That happens. Rest counts too, and tomorrow is always fresh.</p>
-          </>
-        ) : (
-          <>
-            <DayScore done={doneCount} total={GOAL_COUNT} size={132} thickness={13} />
-            <div className="today__readonly-caption">Logged that day</div>
-          </>
-        )}
-      </div>
+      <div className="readonly-content">
+        <div className="today__readonly-hero">
+          {missed ? (
+            <>
+              <div className="today__missed-marker" aria-hidden="true">
+                <i className="ph-bold ph-moon-stars" />
+              </div>
+              <div className="today__missed-title">Nothing logged this day</div>
+            </>
+          ) : (
+            <>
+              <DayScore done={doneCount} total={GOAL_COUNT} size={132} thickness={13} />
+              <div className="today__readonly-caption">Logged that day</div>
+            </>
+          )}
+        </div>
 
-      <div className="today__record-label">What was logged</div>
-      <div className="today__goals">
-        {DAILY_9.map((g) => {
-          const value = viewedState[g.key];
-          return (
-            <DayRecordRow
-              key={g.key}
-              name={g.name}
-              target={g.target}
-              icon={g.icon}
-              color={g.color}
-              done={isGoalDone(g, value)}
-            />
-          );
-        })}
-      </div>
+        <div className="today__record-label">What was logged</div>
+        <div className="today__goals">
+          {DAILY_9.map((g) => {
+            const value = viewedState[g.key];
+            return (
+              <DayRecordRow
+                key={g.key}
+                name={g.name}
+                target={g.target}
+                icon={g.icon}
+                color={g.color}
+                done={isGoalDone(g, value)}
+              />
+            );
+          })}
+        </div>
 
-      <Button variant="primary" size="lg" block icon="ph-bold ph-arrow-u-up-left" onClick={onBackToToday} className="today__back">
-        Back to today
-      </Button>
+        <Button variant="primary" size="lg" block icon="ph-bold ph-arrow-u-up-left" onClick={onBackToToday} className="today__back">
+          Back to today
+        </Button>
+      </div>
     </>
   );
 }

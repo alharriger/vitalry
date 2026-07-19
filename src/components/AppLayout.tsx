@@ -20,13 +20,30 @@ const TABS: TabItem[] = [
 export function AppLayout() {
   return (
     <TodayLogProvider>
-      <div className="vt-app">
-        <main className="vt-app__screen">
-          <Outlet />
-        </main>
-        <ShellTabBar />
-      </div>
+      <AppShell />
     </TodayLogProvider>
+  );
+}
+
+/**
+ * The shell chrome, rendered INSIDE the provider so it can read the live day
+ * state. On a read-only past day of Today, the whole column tints to the
+ * archived surface (`vt-app--readonly`) — one seamless fill from the top of the
+ * scroll area through the last row (the tab bar keeps its own card surface).
+ */
+function AppShell() {
+  const location = useLocation();
+  const { isEditable, loading, noCompetition } = useTodayLog();
+  const onToday = (location.pathname.split('/')[1] || 'today') === 'today';
+  const readonly = onToday && !loading && !noCompetition && !isEditable;
+
+  return (
+    <div className={`vt-app${readonly ? ' vt-app--readonly' : ''}`}>
+      <main className="vt-app__screen">
+        <Outlet />
+      </main>
+      <ShellTabBar />
+    </div>
   );
 }
 
