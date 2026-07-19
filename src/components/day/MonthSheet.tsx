@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { localDateRange } from '../../lib/scoring';
 import { weekdayOffset } from '../../lib/dayNav';
 import type { DayClass } from '../../lib/scoring';
@@ -7,7 +7,7 @@ import './MonthSheet.css';
 export interface MonthSheetProps {
   /** Whether the sheet is open (mounted + risen). */
   open: boolean;
-  /** Close without selecting (scrim tap, Escape, grabber). */
+  /** Close without selecting (scrim tap, Escape, grabber, swipe-down). */
   onClose: () => void;
   /** Select a day — the parent jumps to it; the sheet then closes. */
   onSelect: (date: string) => void;
@@ -31,6 +31,9 @@ export interface MonthSheetProps {
 
 /** "S M T W T F S" column headers. */
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+/** px the sheet must be pulled down before release dismisses it. */
+const DISMISS_AFTER = 90;
 
 /** Short-month + year label for a date, parsed at local noon (no tz drift). */
 function monthYear(date: string): { month: string; year: string } {
@@ -62,14 +65,18 @@ function fullLabel(date: string): string {
 /**
  * The month-sheet date picker (handoff frame 2b) — a bottom-sheet heatmap of the
  * whole competition. Every day is coloured by how many goals were completed
- * (`dayClass`); today/yesterday carry the editable ring, the viewed day a base
- * bar. Tapping a selectable (non-future) day jumps to it and closes the sheet.
+ * (`dayClass`). Markers (Amber's 2.5 phone-test revision): TODAY carries the
+ * green base bar; the day you are VIEWING carries the solid border ring;
+ * today/yesterday keep the dashed editable ring. Tapping a selectable
+ * (non-future) day jumps to it and closes the sheet.
+ *
+ * Dismiss: tap the scrim, tap the grabber, press Escape, or **swipe the handle
+ * down** (phone). The grid is a single continuous `start_date → final_date`
+ * calendar, weekday-aligned with leading blanks — a competition that straddles
+ * two months reads as one glanceable heatmap (Amber's call, 2026-07-19).
  *
  * Presentational only: all data arrives via props (Phase 5 History reuses it
- * against any competition + range). The grid is a single continuous
- * `start_date → final_date` calendar, weekday-aligned with leading blanks — a
- * competition that straddles two months reads as one glanceable heatmap
- * (Amber's call, 2026-07-19).
+ * against any competition + range).
  */
 export function MonthSheet({
   open,
@@ -85,13 +92,19 @@ export function MonthSheet({
   isEditable,
 }: MonthSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  // How far the sheet is currently dragged down, and whether a drag is active
+  // (suppresses the snap-back transition while the finger is down).
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   // Focus management + Escape-to-close, only while open.
   useEffect(() => {
     if (!open) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
-    // Move focus into the sheet (the current/today cell if present, else the sheet).
+    // Move focus into the sheet (the viewed cell if present, else the sheet).
     const focusTarget =
       sheetRef.current?.querySelector<HTMLElement>('[data-focus="true"]') ?? sheetRef.current;
     focusTarget?.focus();
@@ -109,6 +122,60 @@ export function MonthSheet({
     };
   }, [open, onClose]);
 
+  // Swipe-to-dismiss. Bound natively on the handle (React's delegated pointer
+  // events proved unreliable under mobile emulation); move/up live on `document`
+  // so tracking survives the finger leaving the handle, and `touch-action: none`
+  // on the handle stops the page from scrolling underneath. A real drag is only
+  // recognised past a few px, so a plain tap still fires the grabber's click.
+  useEffect(() => {
+    if (!open) return;
+    setDragY(0);
+    setDragging(false);
+    const handle = handleRef.current;
+    if (!handle) return;
+
+    let startY = 0;
+    let captured = false;
+
+    const onMove = (ev: PointerEvent) => {
+      const dy = ev.clientY - startY;
+      if (dy <= 0) {
+        if (captured) setDragY(0);
+        return; // only track downward drags
+      }
+      if (!captured && dy > 4) {
+        captured = true;
+        setDragging(true);
+      }
+      if (captured) setDragY(dy);
+    };
+    const onUp = (ev: PointerEvent) => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      if (!captured) return; // a tap — let the grabber's click handle it
+      setDragging(false);
+      if (ev.clientY - startY > DISMISS_AFTER) onClose();
+      setDragY(0);
+    };
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      startY = e.clientY;
+      captured = false;
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    };
+
+    handle.addEventListener('pointerdown', onDown);
+    return () => {
+      handle.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const days = localDateRange(startDate, finalDate);
@@ -119,25 +186,24 @@ export function MonthSheet({
       <div className="vt-sheet__scrim" onClick={onClose} aria-hidden="true" />
 
       <div
-        className="vt-sheet__panel"
+        className={`vt-sheet__panel${dragging ? ' vt-sheet__panel--dragging' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label="Jump to a day"
         ref={sheetRef}
         tabIndex={-1}
+        style={dragY ? { transform: `translateY(${dragY}px)` } : undefined}
       >
-        <button
-          type="button"
-          className="vt-sheet__grabber"
-          aria-label="Close"
-          onClick={onClose}
-        />
+        {/* Drag handle: swipe down to dismiss (or tap the grabber to close). */}
+        <div className="vt-sheet__handle" ref={handleRef}>
+          <button type="button" className="vt-sheet__grabber" aria-label="Close" onClick={onClose} />
 
-        <div className="vt-sheet__header">
-          <div className="vt-sheet__month">{rangeLabel(startDate, finalDate)}</div>
-          <div className="vt-sheet__chip">
-            <i className="ph-bold ph-flag-checkered" aria-hidden="true" />
-            Day {dayNumber} of {totalDays}
+          <div className="vt-sheet__header">
+            <div className="vt-sheet__month">{rangeLabel(startDate, finalDate)}</div>
+            <div className="vt-sheet__chip">
+              <i className="ph-bold ph-flag-checkered" aria-hidden="true" />
+              Day {dayNumber} of {totalDays}
+            </div>
           </div>
         </div>
 
@@ -171,12 +237,14 @@ export function MonthSheet({
                     : 'nothing logged';
             const label = `${fullLabel(date)} — ${stateLabel}${isToday ? ', today' : ''}`;
 
+            // TODAY → base bar; VIEWING → solid ring; editable → dashed ring.
+            // Border precedence (viewing > editable) is handled by CSS order.
             const classNames = [
               'vt-sheet__cell',
               `vt-sheet__cell--${isFuture ? 'future' : cls}`,
               isToday && 'vt-sheet__cell--today',
-              !isToday && editable && 'vt-sheet__cell--editable',
-              !isToday && isViewing && 'vt-sheet__cell--viewing',
+              editable && 'vt-sheet__cell--editable',
+              isViewing && 'vt-sheet__cell--viewing',
             ]
               .filter(Boolean)
               .join(' ');
@@ -203,10 +271,7 @@ export function MonthSheet({
                 }}
               >
                 <span className="vt-sheet__num">{dayNum}</span>
-                {cls === 'perfect' && (
-                  <i className="ph-fill ph-star vt-sheet__star" aria-hidden="true" />
-                )}
-                {isToday && <span className="vt-sheet__todaylabel">Today</span>}
+                {cls === 'perfect' && <i className="ph-fill ph-star vt-sheet__star" aria-hidden="true" />}
               </button>
             );
           })}

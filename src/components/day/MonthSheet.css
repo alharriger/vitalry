@@ -27,10 +27,21 @@
   padding: 12px 18px calc(22px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -14px 44px rgba(42, 38, 32, 0.22);
   animation: vt-sheet-rise var(--dur-slow) var(--ease-out);
+  /* Snap-back after an incomplete swipe; suppressed while the finger is down. */
+  transition: transform var(--dur-base) var(--ease-out);
 }
+.vt-sheet__panel--dragging { transition: none; }
 .vt-sheet__panel:focus { outline: none; }
 
-/* Grabber doubles as a close affordance. */
+/* Drag handle — the whole grabber+header zone dismisses on a downward swipe.
+   touch-action:none so the browser doesn't scroll/gesture during the drag. */
+.vt-sheet__handle {
+  touch-action: none;
+  cursor: grab;
+}
+.vt-sheet__handle:active { cursor: grabbing; }
+
+/* Grabber doubles as a tap-to-close affordance. Enlarged hit area via padding. */
 .vt-sheet__grabber {
   display: block;
   width: 40px;
@@ -136,27 +147,15 @@ button.vt-sheet__cell:focus-visible { outline: 3px solid var(--focus-ring); outl
   margin-top: 2px;
 }
 
-/* ---- Markers ----------------------------------------------------------- */
-/* Editable (yesterday): dashed green ring. */
+/* ---- Markers (Amber's 2.5 revision) ------------------------------------ */
+/* Editable (today & yesterday): dashed green ring. */
 .vt-sheet__cell--editable { border: 2.5px dashed var(--green-600); }
-/* Today: solid evergreen ring + "Today" label. Wins over editable. */
-.vt-sheet__cell--today { border: 2.5px solid var(--evergreen); }
-.vt-sheet__todaylabel {
-  position: absolute;
-  bottom: 3px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-family: var(--font-body);
-  font-size: 7px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--evergreen);
-  line-height: 1;
-}
-/* Viewing (a non-today day currently open): solid green base bar, clipped. */
-.vt-sheet__cell--viewing::after {
+/* Viewing (the day currently open): solid evergreen ring — declared AFTER
+   --editable so it wins the shared border when a viewed day is also editable. */
+.vt-sheet__cell--viewing { border: 2.5px solid var(--evergreen); }
+/* Today: a solid green base bar pinned to the bottom, clipped by overflow.
+   The bar is independent of the border, so a viewed today shows ring + bar. */
+.vt-sheet__cell--today::after {
   content: '';
   position: absolute;
   left: 0;
@@ -199,9 +198,10 @@ button.vt-sheet__cell:focus-visible { outline: 3px solid var(--focus-ring); outl
 .vt-sheet__sw--some { background: color-mix(in srgb, var(--mint-200) 45%, var(--surface-card)); }
 .vt-sheet__sw--nothing { background: var(--cream-200); }
 .vt-sheet__sw--editable { border: 2px dashed var(--green-600); background: var(--surface-card); }
-.vt-sheet__sw--today { border: 2px solid var(--evergreen); background: var(--surface-card); }
-.vt-sheet__sw--viewing { background: var(--mint-200); overflow: hidden; }
-.vt-sheet__sw--viewing::after {
+/* Viewing = solid ring; Today = green base bar (swapped, 2.5 revision). */
+.vt-sheet__sw--viewing { border: 2px solid var(--evergreen); background: var(--surface-card); }
+.vt-sheet__sw--today { background: var(--mint-200); overflow: hidden; }
+.vt-sheet__sw--today::after {
   content: '';
   position: absolute;
   left: 0;
@@ -223,6 +223,8 @@ button.vt-sheet__cell:focus-visible { outline: 3px solid var(--focus-ring); outl
 @media (prefers-reduced-motion: reduce) {
   .vt-sheet__scrim,
   .vt-sheet__panel { animation: none; }
+  /* Keep the finger-follow during a live drag, but no snap-back easing. */
+  .vt-sheet__panel { transition: none; }
   .vt-sheet__cell { transition: none; }
   button.vt-sheet__cell:active { transform: none; }
 }

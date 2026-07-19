@@ -14,10 +14,9 @@ test.describe('Month-sheet date picker (2.5)', () => {
     const sheet = page.getByRole('dialog', { name: 'Jump to a day' });
     await expect(sheet).toBeVisible();
 
-    // Today is marked in the grid (solid ring + "Today" label + aria-current).
+    // Today is marked in the grid (green base bar + aria-current).
     const todayCell = sheet.locator('[aria-current="date"]');
     await expect(todayCell).toHaveCount(1);
-    await expect(todayCell.getByText('Today', { exact: true })).toBeVisible();
 
     // Tap the first day of the competition (start date, a locked past day).
     await sheet.locator('.vt-sheet__grid button').first().click();
@@ -43,6 +42,35 @@ test.describe('Month-sheet date picker (2.5)', () => {
     await expect(page.getByRole('dialog', { name: 'Jump to a day' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog', { name: 'Jump to a day' })).toBeHidden();
+    await expect(page.getByText(/Day \d+ of \d+ · today/)).toBeVisible();
+  });
+
+  test('swiping the handle down dismisses the sheet', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('button[aria-haspopup="dialog"]').click();
+    const sheet = page.getByRole('dialog', { name: 'Jump to a day' });
+    await expect(sheet).toBeVisible();
+
+    // Wait for the rise animation to settle before measuring — boundingBox()
+    // returns the mid-animation position, and page.mouse (unlike .click()) does
+    // not auto-wait for stability, so an early read would miss the handle.
+    const handle = page.locator('.vt-sheet__handle');
+    let box = (await handle.boundingBox())!;
+    for (;;) {
+      await page.waitForTimeout(100);
+      const next = (await handle.boundingBox())!;
+      if (Math.abs(next.y - box.y) < 0.5) { box = next; break; }
+      box = next;
+    }
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, y + 220, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(sheet).toBeHidden();
+    // Never selected a day — still on today.
     await expect(page.getByText(/Day \d+ of \d+ · today/)).toBeVisible();
   });
 });
