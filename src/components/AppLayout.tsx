@@ -38,13 +38,19 @@ function AppShell() {
   const onToday = (location.pathname.split('/')[1] || 'today') === 'today';
   const readonly = onToday && !loading && !noCompetition && !isEditable;
 
-  // Also tint <body> — with viewport-fit=cover the strip behind the iOS status
-  // bar is painted by <body>, not .vt-app, so tinting only the column leaves a
-  // seam at the top on a locked day. Both switch together (each has its own
-  // opaque background), giving one continuous archived surface.
+  // Tint the document root + body on a locked day. With viewport-fit=cover the
+  // strip behind the status bar is the viewport "canvas": in the installed PWA
+  // it comes from <body>, but in a browser tab Safari paints it from the root
+  // <html> background — so both must be tinted or the old color surfaces at the
+  // top in the browser. .vt-app--readonly still tints the column itself.
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('is-readonly-day', readonly);
     document.body.classList.toggle('is-readonly-day', readonly);
-    return () => document.body.classList.remove('is-readonly-day');
+    return () => {
+      root.classList.remove('is-readonly-day');
+      document.body.classList.remove('is-readonly-day');
+    };
   }, [readonly]);
 
   return (
