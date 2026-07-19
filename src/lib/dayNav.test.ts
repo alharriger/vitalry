@@ -1,34 +1,32 @@
 import { describe, it, expect } from 'vitest';
 import { dayNumber, isEditableDay, stepBounds } from './dayNav';
 
-describe('stepBounds (Phase 2.3 grace-capped stepping)', () => {
-  it('reaches yesterday..today mid-competition', () => {
-    // Competition started well before today; the cap is the grace window.
+describe('stepBounds (Phase 2.4 — reaches the whole run)', () => {
+  it('spans start_date..today mid-competition', () => {
+    // Every past day is now reachable, floored at the competition start.
     expect(stepBounds('2026-07-01', '2026-07-18')).toEqual({
-      min: '2026-07-17',
+      min: '2026-07-01',
       max: '2026-07-18',
     });
   });
 
   it('collapses to today alone when the competition started today', () => {
-    // No yesterday inside the competition → cannot step back.
     expect(stepBounds('2026-07-18', '2026-07-18')).toEqual({
       min: '2026-07-18',
       max: '2026-07-18',
     });
   });
 
-  it('floors at start_date when today is the second day', () => {
-    // Yesterday IS day 1 (== start), so it is reachable.
+  it('floors at start_date, not yesterday, when today is the second day', () => {
     expect(stepBounds('2026-07-17', '2026-07-18')).toEqual({
       min: '2026-07-17',
       max: '2026-07-18',
     });
   });
 
-  it('handles a month boundary in the yesterday step', () => {
+  it('handles a month boundary across the span', () => {
     expect(stepBounds('2026-06-15', '2026-07-01')).toEqual({
-      min: '2026-06-30',
+      min: '2026-06-15',
       max: '2026-07-01',
     });
   });

@@ -1,17 +1,26 @@
 .today__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: 18px;
+  margin: 8px 0 14px;
+  min-height: 42px;
 }
+/* One compact line that grows on larger screens but NEVER wraps — a long name
+   ellipsizes rather than pushing the DateNav down. */
 .today__greeting {
   font-family: var(--font-display);
   font-weight: var(--fw-extra);
-  font-size: var(--text-3xl);
+  font-size: clamp(19px, 5.6vw, 24px);
   letter-spacing: var(--ls-tight);
-  line-height: var(--lh-snug);
+  line-height: 1.15;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* The read-only "Looking back" variant — same slot/size, quietly muted. */
+.today__greeting--muted { color: var(--text-muted); }
 .today__hero {
   display: flex;
   flex-direction: column;
@@ -66,3 +75,79 @@
   flex-direction: column;
   gap: 10px;
 }
+
+/* --- Read-only past day (frames 2c/2d) ---------------------------------- */
+/* The desaturated content wash (Change 3). Sits below the lock banner, which
+   stays outside it and keeps full color. The whole app column also tints on a
+   read-only day — see .vt-app--readonly in AppLayout.css. */
+.readonly-content { filter: saturate(0.5); }
+
+.today__lock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--goal-sleep) 12%, var(--white));
+  border: var(--border-thin) solid color-mix(in srgb, var(--goal-sleep) 30%, transparent);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink-700);
+}
+.today__lock [class*="ph-"] { flex: none; font-size: 22px; color: var(--goal-sleep); }
+
+/* Fixed min-height so "What was logged" and every row below start at the same Y
+   whether the day was logged (ring) or missed (marker) — no jump when stepping. */
+.today__readonly-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 208px;
+  padding: 4px 0 22px;
+  text-align: center;
+}
+.today__readonly-caption {
+  font-family: var(--font-body);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Missed-day marker — a soft "nothing here" placeholder, never a failure. */
+/* Tracks the read-only DayScore's fluid diameter so a logged day and a missed
+   day keep identical hero footprints at every viewport width. */
+.today__missed-marker {
+  width: clamp(116px, 34vw, 152px);
+  height: clamp(116px, 34vw, 152px);
+  border-radius: 50%;
+  border: 3px dashed var(--border-strong);
+  background: var(--surface-tint);
+  display: grid; place-items: center;
+  color: var(--goal-sleep);
+  container-type: size;
+}
+.today__missed-marker [class*="ph-"] { font-size: 40cqmin; }
+.today__missed-title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-xl);
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.today__record-label {
+  font-family: var(--font-body);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.today__back { margin-top: 20px; }

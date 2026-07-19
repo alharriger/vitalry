@@ -44,6 +44,9 @@ export function GoalRow({
   const cls = [
     'vt-goal',
     tappable ? 'vt-goal--tappable' : '',
+    // A row with a trailing control IS a counter goal (rainbow / water). The
+    // modifier drives the compact-inline stepper + wrapping title (GoalRow.css).
+    hasControl ? 'vt-goal--counter' : '',
     done ? 'vt-goal--done' : '',
     className,
   ].filter(Boolean).join(' ');

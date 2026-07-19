@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TabBar, type TabItem } from './ui/TabBar';
 import { TodayLogProvider, useTodayLog } from '../lib/useTodayLog';
@@ -20,13 +21,45 @@ const TABS: TabItem[] = [
 export function AppLayout() {
   return (
     <TodayLogProvider>
-      <div className="vt-app">
-        <main className="vt-app__screen">
-          <Outlet />
-        </main>
-        <ShellTabBar />
-      </div>
+      <AppShell />
     </TodayLogProvider>
+  );
+}
+
+/**
+ * The shell chrome, rendered INSIDE the provider so it can read the live day
+ * state. On a read-only past day of Today, the whole column tints to the
+ * archived surface (`vt-app--readonly`) — one seamless fill from the top of the
+ * scroll area through the last row (the tab bar keeps its own card surface).
+ */
+function AppShell() {
+  const location = useLocation();
+  const { isEditable, loading, noCompetition } = useTodayLog();
+  const onToday = (location.pathname.split('/')[1] || 'today') === 'today';
+  const readonly = onToday && !loading && !noCompetition && !isEditable;
+
+  // Tint the document root + body on a locked day. With viewport-fit=cover the
+  // strip behind the status bar is the viewport "canvas": in the installed PWA
+  // it comes from <body>, but in a browser tab Safari paints it from the root
+  // <html> background — so both must be tinted or the old color surfaces at the
+  // top in the browser. .vt-app--readonly still tints the column itself.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('is-readonly-day', readonly);
+    document.body.classList.toggle('is-readonly-day', readonly);
+    return () => {
+      root.classList.remove('is-readonly-day');
+      document.body.classList.remove('is-readonly-day');
+    };
+  }, [readonly]);
+
+  return (
+    <div className={`vt-app${readonly ? ' vt-app--readonly' : ''}`}>
+      <main className="vt-app__screen">
+        <Outlet />
+      </main>
+      <ShellTabBar />
+    </div>
   );
 }
 

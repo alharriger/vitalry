@@ -1,4 +1,10 @@
 .vt-dayscore { position: relative; display: inline-flex; }
+/* Fluid dial: the box is a query container, so the central numerals scale with
+   the rendered diameter (sizes come from --ds-* set inline by the component). */
+.vt-dayscore--fluid { container-type: size; max-width: 100%; }
+.vt-dayscore--fluid .vt-dayscore__num { font-size: var(--ds-num, var(--text-score)); }
+.vt-dayscore--fluid .vt-dayscore__of { font-size: var(--ds-of, var(--text-sm)); }
+.vt-dayscore--fluid .vt-dayscore__pts { font-size: var(--ds-pts, var(--text-xs)); }
 .vt-dayscore__center {
   position: absolute; inset: 0;
   display: flex; flex-direction: column;

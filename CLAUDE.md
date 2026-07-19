@@ -11,6 +11,7 @@ daily habit list. Points for goal completion, never raw fitness stats.
 - Architecture decisions + decision log → [ai_docs/architecture.md](ai_docs/architecture.md)
 - Design system rules + voice/tone → [ai_docs/design_system.md](ai_docs/design_system.md) (tokens/components: `design_handoff_vitalry_v1/design-system/`)
 - Current phase status + handoff notes → [ai_docs/working_sprint.md](ai_docs/working_sprint.md) ← **read this first each session**
+- How to test a change (phone/preview/gates) → [ai_docs/testing_runbook.md](ai_docs/testing_runbook.md)
 - Mistakes log + prevention rules → [ai_docs/pitfalls.md](ai_docs/pitfalls.md)
 - Original founding docs → `fit-friends-and-fam-plan.md` + `design_handoff_vitalry_v1/README.md`
 

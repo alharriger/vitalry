@@ -2,10 +2,10 @@
  * Pure day-navigation math for the reusable day-browser. No React, no Supabase —
  * just local-date string logic layered on the scoring engine's date helpers.
  *
- * Phase 2.3 CAPS stepping to the grace window (yesterday..today). Phase 2.4 will
- * lower the floor to the competition's `start_date` so the whole run is
- * browsable; keep new callers going through these helpers so that change is a
- * one-line edit here.
+ * Phase 2.4 lowers the floor to the competition's `start_date` so the whole run
+ * is browsable (2.3 had capped it at yesterday). Editability is still the grace
+ * window — `isEditableDay` — while stepping now reaches every past day as a
+ * read-only record.
  */
 
 import { localDateRange, previousLocalDate } from './scoring';
@@ -19,15 +19,15 @@ export interface StepBounds {
 }
 
 /**
- * The reachable step window for Phase 2.3: `yesterday..today`, floored at the
- * competition start (you can't step before day 1) and never into the future.
- * If the competition started today, yesterday isn't reachable and the window
- * collapses to today alone.
+ * The reachable step window: `start_date..today`. Prev floors at the competition
+ * start (you can't step before day 1); next ceils at today (never the future).
+ * If the competition hasn't started yet the window collapses to its start day.
+ * Stepping reaches every past day; whether a day is *editable* is a separate
+ * grace-window question (`isEditableDay`).
  */
 export function stepBounds(startDate: string, today: string): StepBounds {
   const max = today >= startDate ? today : startDate;
-  const yesterday = previousLocalDate(max);
-  const min = yesterday >= startDate ? yesterday : max;
+  const min = startDate <= max ? startDate : max;
   return { min, max };
 }
 

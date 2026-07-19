@@ -18,6 +18,20 @@
   /* Leave room so content never hides behind the pinned tab bar. */
   padding-bottom: calc(var(--tabbar-h) + var(--space-6));
 }
+/* Read-only past day: the entire column tints to the archived surface, so the
+   locked day reads as one continuous fill top-to-bottom with no seam. The
+   .vt-app__screen is transparent, so this shows through the scroll area. */
+.vt-app--readonly { background: var(--surface-tint); transition: background var(--dur-base) var(--ease-out); }
+/* The strip behind the status bar (viewport-fit=cover) is the viewport canvas —
+   painted from <body> in the installed PWA but from the root <html> in a browser
+   tab. Tint both, in step with the column, so a locked day has no seam at top. */
+html.is-readonly-day,
+body.is-readonly-day { background: var(--surface-tint); transition: background var(--dur-base) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) {
+  .vt-app--readonly,
+  html.is-readonly-day,
+  body.is-readonly-day { transition: none; }
+}
 .vt-app__tabbar {
   position: sticky;
   bottom: 0;

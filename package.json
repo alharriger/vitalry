@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint",
@@ -14,7 +15,8 @@
     "test:rls": "vitest run --config vitest.rls.config.ts",
     "test:e2e": "playwright test",
     "seed:dev": "vite-node scripts/seed-dev-competition.ts",
-    "devlink": "vite-node scripts/dev-magic-link.ts"
+    "devlink": "vite-node scripts/dev-magic-link.ts",
+    "preview:url": "node scripts/preview-url.mjs"
   },
   "dependencies": {
     "@phosphor-icons/web": "^2.1.2",
