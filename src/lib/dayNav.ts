@@ -48,3 +48,15 @@ export function dayNumber(startDate: string, date: string): number {
 export function isEditableDay(today: string, date: string): boolean {
   return date === today || date === previousLocalDate(today);
 }
+
+/**
+ * Weekday index (0 = Sunday … 6 = Saturday) of a `'YYYY-MM-DD'` date. Used by
+ * the month-sheet grid (2.5) to pad leading blank cells before the first day.
+ *
+ * Parsed at local NOON — the same trick the day-label formatter uses — so the
+ * weekday can never drift to the neighbouring day across a timezone offset
+ * (midnight parsing would).
+ */
+export function weekdayOffset(date: string): number {
+  return new Date(`${date}T12:00:00`).getDay();
+}

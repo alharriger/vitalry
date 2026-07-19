@@ -3,15 +3,16 @@
 > Cross-session handoff doc. Documents the **current phase only**; refresh when a phase
 > completes. Read this first every session.
 
-## Current phase: Phase 2 — Today + scoring engine (broken into 5 steps; **2.5 is next**)
+## Current phase: Phase 2 — Today + scoring engine — ✅ **COMPLETE (all 5 steps merged, 2026-07-19)**
 
-**Status:** Phase 1 merged to `main` (PR #2, `6b4ce5e`). Phase 2 is **planned and broken into
-five independently-shippable steps (2.1–2.5)**, each run as its own full lifecycle by a separate
-Claude instance (Amber's choice, 2026-07-17). The finished date-nav/day-view design has been
-absorbed (see shared context). **Steps 2.1 (scoring engine), 2.2 (Today on live `daily_logs`
-+ autosave), 2.3 (yesterday editable + grace lock), and 2.4 (browse past days: read-only +
-missed) are DONE** — see their sections below. **Start the next session at Step 2.5** (the only
-step left in Phase 2 — the month-sheet picker; it makes the centre date button tappable).
+**Status:** Phase 1 merged to `main` (PR #2, `6b4ce5e`). Phase 2 ran as **five
+independently-shippable steps (2.1–2.5)**, each its own full lifecycle (Amber's choice,
+2026-07-17). **All five are now DONE and merged to `main`:** 2.1 (scoring engine), 2.2 (Today
+on live `daily_logs` + autosave), 2.3 (yesterday editable + grace lock), 2.4 (browse past days:
+read-only + missed), and **2.5 (month-sheet picker — the centre date button is now tappable)**.
+The **Phase 2 exit gate is met** (see the exit-gate section below). **Next session: begin Phase 3**
+— it needs its own kickoff/planning (scope in `vitalry_product.md` roadmap); this tracker should be
+refreshed to Phase 3 when that starts.
 
 ---
 
@@ -267,25 +268,48 @@ step left in Phase 2 — the month-sheet picker; it makes the centre date button
 - **Deps:** 2.3.
 - **Gotchas:** read-only rows must not look tappable (no hover/press/`<button>`); never shame a miss.
 
-### Step 2.5 — Month-sheet picker (heatmap)  *(handoff frame 2b)*
-- **Goal:** the designed jump-to-day picker; the date button becomes tappable.
-- **Files:** bottom-sheet month calendar (scrim + grabber + weekday header + day grid) opened from
-  the center date button. Day-cell state language, **exactly** per frame 2b: perfect (green +
-  gold star) / active (green) / some (light green) / nothing (warm gray) / future (dimmed) /
-  out-of-comp (muted, non-selectable); **editable** dashed-green ring; **today** solid-evergreen
-  ring + "Today" label; **viewing** green base bar; legend. Selecting a day jumps to it + closes.
-  Scoped to the **current** competition only. Reuse the 2.1 `dayClass` for cell fills.
-- **Checkpoint (phone):** open the sheet, the heatmap reads correctly against your logged history,
-  tap a day to jump straight to it.
-- **Deps:** 2.4 (needs read-only/missed views to land on) + 2.1 (day-class).
-- **Gotchas:** **month-boundary open item** — a 30-day game can straddle two months; default to a
-  single continuous `start_date → today` grid unless Amber prefers one month + chevrons (confirm
-  during build). Respect `prefers-reduced-motion`; 44px+ targets throughout.
+### Step 2.5 — Month-sheet picker (heatmap)  *(handoff frame 2b)* — ✅ **DONE (2026-07-19)**
+- **Shipped:** new presentational **`MonthSheet`** (`src/components/day/MonthSheet.tsx` + `.css`) —
+  a bottom-sheet heatmap of the **whole competition** opened from the `DateNav` centre button
+  (`onOpenPicker` wired at last). Scrim + drag-handle + weekday header + day grid; cell fills per
+  frame 2b via the 2.1 `dayClass` (perfect green + gold star / active green / some light-green /
+  nothing warm-gray / future dimmed & non-interactive). New pure helper `weekdayOffset` in
+  `dayNav.ts` (+2 tests) for the grid's leading blanks. `useTodayLog` now exposes
+  `classByDate` (derived from the existing scoring standing — **no new engine work**), `finalDate`,
+  `selectDate` (clamped to `[start,today]`), `isDayEditable`, and `pickerOpen/openPicker/closePicker`.
+  `TodayScreen` renders the sheet. Built **reusable/data-driven** so Phase 5 History can reuse it.
+- **Design decisions (Amber, 2026-07-19):** (1) **single continuous `start_date → final-day`**
+  weekday-aligned grid — a comp that straddles two months (dev game Jun 28→Jul 27) reads as one
+  glanceable heatmap (resolves the handoff's month-boundary open item; no chevrons). (2) After the
+  phone test she **swapped the today/viewing markers**: TODAY now carries the green **base bar** (the
+  "TODAY" word is gone), the day you're **VIEWING** carries the solid evergreen **border ring**;
+  editable (today/yesterday) keeps its dashed ring (viewing wins the shared border via CSS order).
+  (3) **Swipe-to-dismiss** added (grabber/header is a drag handle; pull down to close, snaps back on a
+  short pull) on top of scrim-tap / grabber-tap / Escape — she found the sheet hard to escape on phone.
+- **Gates:** typecheck/lint clean (pre-existing fast-refresh warnings only); **75 unit** (2 new
+  `weekdayOffset`) + **8 e2e** (2 new: open→pick→close, scrim/Escape close, swipe-dismiss) + prod
+  build green. **Code review:** 3 findings, all fixed pre-merge — day cells fell below the 44px tap
+  floor on ≤375px phones (tightened panel gutter 18→12px + grid gap 6→4px; verified 44.6px at 360px),
+  the grabber tap box was only 40×4px (now a full-width 44px-tall button with the bar drawn via
+  `::before`; verified 336×44px), and a hard-coded sheet `box-shadow` (→ new `--shadow-sheet` token).
+  **Security review: PASS** — presentational + read-only; no DB write/secret/injection; `selectDate`
+  clamps and editing still gated by `setGoal` + the 2.3 grace trigger; swipe listeners cleaned up.
+  `scoring.ts` untouched → no contract re-run.
+- **Retro:** the feature was straightforward; the time sink was the **swipe-dismiss e2e test** —
+  `page.mouse` at coords from `boundingBox()` read *during* the 340ms rise animation pressed empty
+  space (the real component was fine). Fixed by settling the box first; logged to `pitfalls.md`
+  (coordinate-based Playwright input doesn't auto-wait for animation like `.click()` does). Also a
+  self-inflicted scare: a `git checkout` to drop debug logging reverted in-progress work — reapplied
+  cleanly. Native (ref-bound) pointer listeners beat React's delegated `onPointerDown` under mobile
+  emulation for the drag.
+- **Design-handoff docs:** 2.5 is now merged, but the removal gate (below) is **2.5 AND Phase 5
+  History** — Phase 5 still consumes the date-nav/day-view handoff, so the docs **stay** for now.
 
-## Phase 2 exit gate (whole — reached cumulatively by 2.5)
-Scoring suite green incl. edge cases (streak reset, 3-day threshold, grace lock, local midnight) · real
-check-in < 20s on a phone · tap → reload → state persists · yesterday editable within grace,
-locked after · can step/pick and read earlier days of the competition.
+## Phase 2 exit gate (whole — reached cumulatively by 2.5) — ✅ **MET (2026-07-19)**
+Scoring suite green incl. edge cases (streak reset, 3-day threshold, grace lock, local midnight) ·
+real check-in < 20s on a phone · tap → reload → state persists · yesterday editable within grace,
+locked after · can **step and pick** and read earlier days of the competition. All satisfied across
+2.1–2.5; the month-sheet picker (2.5) delivered the "pick" half of the day navigation.
 
 ## Carries forward to Phase 5
 The day-browser, calendar-cell language, and scoring engine built here are reused by the Phase 5

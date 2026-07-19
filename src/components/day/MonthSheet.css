@@ -1,0 +1,245 @@
+/* Month-sheet date picker (handoff: date-nav-day-view, frame 2b). A bottom-sheet
+   heatmap of the whole competition. Tokens only; 44px+ tap targets on a phone. */
+
+.vt-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.vt-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: vt-sheet-fade var(--dur-base) var(--ease-out);
+}
+
+/* The sheet aligns to the app column, not the full desktop viewport. */
+.vt-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--screen-max);
+  background: var(--surface-card);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  /* 12px horizontal gutter (with the 4px grid gap below) keeps a 7-col day cell
+     ≥44px — the tap floor — down to ~360px-wide phones. */
+  padding: 12px 12px calc(22px + env(safe-area-inset-bottom, 0px));
+  box-shadow: var(--shadow-sheet);
+  animation: vt-sheet-rise var(--dur-slow) var(--ease-out);
+  /* Snap-back after an incomplete swipe; suppressed while the finger is down. */
+  transition: transform var(--dur-base) var(--ease-out);
+}
+.vt-sheet__panel--dragging { transition: none; }
+.vt-sheet__panel:focus { outline: none; }
+
+/* Drag handle — the whole grabber+header zone dismisses on a downward swipe.
+   touch-action:none so the browser doesn't scroll/gesture during the drag. */
+.vt-sheet__handle {
+  touch-action: none;
+  cursor: grab;
+}
+.vt-sheet__handle:active { cursor: grabbing; }
+
+/* Grabber doubles as a tap-to-close affordance. The visible bar is a thin 40×4
+   pill, but the clickable box is a full 44px-tall hit target (the tap floor);
+   the bar is drawn with a pseudo-element so the button can be larger than it. */
+.vt-sheet__grabber {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: var(--tap-min);
+  margin: 0 0 2px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.vt-sheet__grabber::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--sand-300);
+}
+.vt-sheet__grabber:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+.vt-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.vt-sheet__month {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: var(--ls-tight);
+  color: var(--text-primary);
+}
+.vt-sheet__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.vt-sheet__chip i { font-size: 15px; color: var(--evergreen); }
+
+.vt-sheet__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.vt-sheet__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+/* Base cell — every real cell carries a transparent 2.5px border so the ring
+   markers never change a cell's footprint. */
+.vt-sheet__cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2.5px solid transparent;
+  border-radius: 13px;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+.vt-sheet__cell--blank { cursor: default; }
+.vt-sheet__num {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+button.vt-sheet__cell:active { transform: scale(var(--press-scale)); }
+button.vt-sheet__cell:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+
+/* ---- Fills (README frame 2b table) ------------------------------------- */
+.vt-sheet__cell--perfect,
+.vt-sheet__cell--active { background: var(--mint-200); }
+.vt-sheet__cell--some { background: color-mix(in srgb, var(--mint-200) 45%, var(--surface-card)); }
+.vt-sheet__cell--nothing { background: var(--cream-200); }
+.vt-sheet__cell--future {
+  background: transparent;
+  opacity: 0.4;
+  cursor: default;
+}
+.vt-sheet__cell--future .vt-sheet__num { color: var(--text-muted); }
+
+/* Perfect-day gold star, centered below the number. */
+.vt-sheet__star {
+  font-size: 11px;
+  color: var(--gold);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* ---- Markers (Amber's 2.5 revision) ------------------------------------ */
+/* Editable (today & yesterday): dashed green ring. */
+.vt-sheet__cell--editable { border: 2.5px dashed var(--green-600); }
+/* Viewing (the day currently open): solid evergreen ring — declared AFTER
+   --editable so it wins the shared border when a viewed day is also editable. */
+.vt-sheet__cell--viewing { border: 2.5px solid var(--evergreen); }
+/* Today: a solid green base bar pinned to the bottom, clipped by overflow.
+   The bar is independent of the border, so a viewed today shows ring + bar. */
+.vt-sheet__cell--today::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  background: var(--evergreen);
+}
+
+/* ---- Legend ------------------------------------------------------------ */
+.vt-sheet__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 14px;
+  margin-top: var(--space-5);
+}
+.vt-sheet__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.vt-sheet__sw {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+.vt-sheet__sw i { font-size: 8px; color: var(--gold); }
+.vt-sheet__sw--perfect,
+.vt-sheet__sw--active { background: var(--mint-200); }
+.vt-sheet__sw--some { background: color-mix(in srgb, var(--mint-200) 45%, var(--surface-card)); }
+.vt-sheet__sw--nothing { background: var(--cream-200); }
+.vt-sheet__sw--editable { border: 2px dashed var(--green-600); background: var(--surface-card); }
+/* Viewing = solid ring; Today = green base bar (swapped, 2.5 revision). */
+.vt-sheet__sw--viewing { border: 2px solid var(--evergreen); background: var(--surface-card); }
+.vt-sheet__sw--today { background: var(--mint-200); overflow: hidden; }
+.vt-sheet__sw--today::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--evergreen);
+}
+
+/* ---- Motion ------------------------------------------------------------ */
+@keyframes vt-sheet-rise {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes vt-sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-sheet__scrim,
+  .vt-sheet__panel { animation: none; }
+  /* Keep the finger-follow during a live drag, but no snap-back easing. */
+  .vt-sheet__panel { transition: none; }
+  .vt-sheet__cell { transition: none; }
+  button.vt-sheet__cell:active { transform: none; }
+}

@@ -30,6 +30,9 @@
   /* Playful "sticker" shadow for celebratory chips / active dots */
   --shadow-pop: 0 4px 0 rgba(42, 38, 32, 0.12);
 
+  /* Upward-cast lift for bottom sheets rising over the screen. */
+  --shadow-sheet: 0 -14px 44px rgba(42, 38, 32, 0.22);
+
   /* ---- Motion ------------------------------------------------------------ */
   /* gentle overshoot on --ease-spring */
   --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);       /* @kind other */

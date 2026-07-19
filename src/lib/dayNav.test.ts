@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dayNumber, isEditableDay, stepBounds } from './dayNav';
+import { dayNumber, isEditableDay, stepBounds, weekdayOffset } from './dayNav';
 
 describe('stepBounds (Phase 2.4 — reaches the whole run)', () => {
   it('spans start_date..today mid-competition', () => {
@@ -67,5 +67,19 @@ describe('isEditableDay', () => {
   });
   it('handles yesterday across a month boundary', () => {
     expect(isEditableDay('2026-07-01', '2026-06-30')).toBe(true);
+  });
+});
+
+describe('weekdayOffset', () => {
+  it('returns 0..6 for known dates (Sun=0)', () => {
+    expect(weekdayOffset('2026-06-28')).toBe(0); // Sunday — dev comp start
+    expect(weekdayOffset('2026-07-19')).toBe(0); // Sunday
+    expect(weekdayOffset('2026-07-20')).toBe(1); // Monday
+    expect(weekdayOffset('2026-07-25')).toBe(6); // Saturday
+  });
+
+  it('is stable across a month boundary', () => {
+    expect(weekdayOffset('2026-06-30')).toBe(2); // Tuesday
+    expect(weekdayOffset('2026-07-01')).toBe(3); // Wednesday
   });
 });

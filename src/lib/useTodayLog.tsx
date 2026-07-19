@@ -24,6 +24,7 @@ import {
   nextLocalDate,
   scoreCompetition,
   scoreDay,
+  type DayClass,
   type DayScoreResult,
 } from './scoring';
 import { dayNumber, isEditableDay, stepBounds } from './dayNav';
@@ -92,6 +93,21 @@ interface TodayLog {
   stepNext: () => void;
   /** Jump back to today. */
   goToToday: () => void;
+  /** Jump to any day within the reachable window (the month-sheet picker). No-op
+   *  outside `[start_date, today]`. */
+  selectDate: (date: string) => void;
+  /** The competition's final day `'YYYY-MM-DD'` (start + durationDays − 1). */
+  finalDate: string;
+  /** Per-day classification for `start_date..today` (drives the picker heatmap). */
+  classByDate: Record<string, DayClass>;
+  /** Whether an arbitrary day is editable (today or yesterday) — for the picker's ring. */
+  isDayEditable: (date: string) => boolean;
+  /** Whether the month-sheet picker is open. */
+  pickerOpen: boolean;
+  /** Open the month-sheet picker. */
+  openPicker: () => void;
+  /** Close the month-sheet picker. */
+  closePicker: () => void;
   /** Current run of consecutive perfect days ending today (for the flame). */
   currentStreak: number;
   /** Convenience: today isn't active yet (drives the tab-bar dot). */
@@ -147,6 +163,7 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
   // optimistically as the viewer edits an in-grace day.
   const [logsByDate, setLogsByDate] = useState<Record<string, GoalStates>>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   // --- Closure-stable mirrors + autosave machinery. ------------------------
   const tzRef = useRef<string | undefined>(undefined); // effective timezone
@@ -330,10 +347,15 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
   );
 
   // --- Derived scoring (real engine, live) ---------------------------------
-  const { todayResult, viewedResult, currentStreak } = useMemo(() => {
+  const { todayResult, viewedResult, currentStreak, classByDate } = useMemo(() => {
     if (!competition) {
       const empty = emptyDayResult(today);
-      return { todayResult: empty, viewedResult: emptyDayResult(viewedDate), currentStreak: 0 };
+      return {
+        todayResult: empty,
+        viewedResult: emptyDayResult(viewedDate),
+        currentStreak: 0,
+        classByDate: {} as Record<string, DayClass>,
+      };
     }
     const rules = competition.scoringRules ?? DEFAULT_SCORING_RULES;
     // Clamp the window's right edge so a not-yet-started comp doesn't produce an
@@ -349,6 +371,10 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
     const tResult = byDate.get(today) ?? emptyDayResult(today);
     const vResult = byDate.get(viewedDate) ?? emptyDayResult(viewedDate);
 
+    // Per-day classification for the month-sheet heatmap (every day start..asOf).
+    const classes: Record<string, DayClass> = {};
+    for (const d of standing.days) classes[d.localDate] = d.dayClass;
+
     // Current streak = trailing run of perfect days ending at today. An
     // in-progress today that isn't perfect *yet* must not zero out a live
     // streak — the day isn't lost until it ends — so when today is still
@@ -362,7 +388,7 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       if (standing.days[i].isPerfect) streak += 1;
       else break;
     }
-    return { todayResult: tResult, viewedResult: vResult, currentStreak: streak };
+    return { todayResult: tResult, viewedResult: vResult, currentStreak: streak, classByDate: classes };
   }, [competition, logsByDate, today, viewedDate]);
 
   // --- Navigation ----------------------------------------------------------
@@ -389,10 +415,32 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
 
   const goToToday = useCallback(() => setViewedDate(today), [today]);
 
+  // Jump to any reachable day (the month-sheet picker). Clamp defensively — the
+  // sheet never offers a future/out-of-range day, but never trust the caller.
+  const selectDate = useCallback(
+    (date: string) => {
+      if (date < bounds.min || date > bounds.max) return;
+      setViewedDate(date);
+    },
+    [bounds.min, bounds.max],
+  );
+
+  const openPicker = useCallback(() => setPickerOpen(true), []);
+  const closePicker = useCallback(() => setPickerOpen(false), []);
+
   const isToday = viewedDate === today;
   const isEditable = isEditableDay(today, viewedDate);
+  // Grace check for any day, for the picker's editable ring (closes over `today`).
+  const isDayEditable = useCallback((date: string) => isEditableDay(today, date), [today]);
   const totalDays = competition?.durationDays ?? 0;
   const viewedDayNumber = competition ? dayNumber(competition.startDate, viewedDate) : 0;
+  // Final day = start + durationDays − 1, walked with the calendar-safe helper.
+  const finalDate = useMemo(() => {
+    if (!competition || competition.durationDays < 1) return today;
+    let d = competition.startDate;
+    for (let i = 1; i < competition.durationDays; i += 1) d = nextLocalDate(d);
+    return d;
+  }, [competition, today]);
   const localHour = localHourIn(tzRef.current);
 
   const value = useMemo<TodayLog>(
@@ -418,6 +466,13 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       stepPrev,
       stepNext,
       goToToday,
+      selectDate,
+      finalDate,
+      classByDate,
+      isDayEditable,
+      pickerOpen,
+      openPicker,
+      closePicker,
       currentStreak,
       checkinPending: !todayResult.isActive,
     }),
@@ -442,6 +497,13 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
       stepPrev,
       stepNext,
       goToToday,
+      selectDate,
+      finalDate,
+      classByDate,
+      isDayEditable,
+      pickerOpen,
+      openPicker,
+      closePicker,
       currentStreak,
       todayResult.isActive,
     ],
