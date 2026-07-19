@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TabBar, type TabItem } from './ui/TabBar';
 import { TodayLogProvider, useTodayLog } from '../lib/useTodayLog';
@@ -36,6 +37,15 @@ function AppShell() {
   const { isEditable, loading, noCompetition } = useTodayLog();
   const onToday = (location.pathname.split('/')[1] || 'today') === 'today';
   const readonly = onToday && !loading && !noCompetition && !isEditable;
+
+  // Also tint <body> — with viewport-fit=cover the strip behind the iOS status
+  // bar is painted by <body>, not .vt-app, so tinting only the column leaves a
+  // seam at the top on a locked day. Both switch together (each has its own
+  // opaque background), giving one continuous archived surface.
+  useEffect(() => {
+    document.body.classList.toggle('is-readonly-day', readonly);
+    return () => document.body.classList.remove('is-readonly-day');
+  }, [readonly]);
 
   return (
     <div className={`vt-app${readonly ? ' vt-app--readonly' : ''}`}>

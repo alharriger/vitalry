@@ -22,8 +22,12 @@
    locked day reads as one continuous fill top-to-bottom with no seam. The
    .vt-app__screen is transparent, so this shows through the scroll area. */
 .vt-app--readonly { background: var(--surface-tint); transition: background var(--dur-base) var(--ease-out); }
+/* <body> paints the safe-area strip behind the status bar (viewport-fit=cover);
+   tint it in step with the column so a locked day has no seam at the top. */
+body.is-readonly-day { background: var(--surface-tint); transition: background var(--dur-base) var(--ease-out); }
 @media (prefers-reduced-motion: reduce) {
-  .vt-app--readonly { transition: none; }
+  .vt-app--readonly,
+  body.is-readonly-day { transition: none; }
 }
 .vt-app__tabbar {
   position: sticky;
