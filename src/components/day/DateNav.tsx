@@ -55,7 +55,7 @@ export function DateNav({
           aria-label="Previous day"
           disabled={!canPrev}
           aria-disabled={!canPrev || undefined}
-          onClick={canPrev ? onPrev : undefined}
+          onClick={onPrev}
         >
           <i className="ph-bold ph-caret-left" aria-hidden="true" />
         </button>
@@ -83,7 +83,7 @@ export function DateNav({
           aria-label="Next day"
           disabled={!canNext}
           aria-disabled={!canNext || undefined}
-          onClick={canNext ? onNext : undefined}
+          onClick={onNext}
         >
           <i className="ph-bold ph-caret-right" aria-hidden="true" />
         </button>

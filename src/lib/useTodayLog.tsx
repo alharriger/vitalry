@@ -181,16 +181,19 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const profile = await loadViewerProfile(userId);
-        // Keep the stored zone in step with the device the player is actually on
-        // so the client and the server grace-window trigger agree on "today".
+        // The day boundary MUST use the committed profiles.timezone, because the
+        // server grace-window trigger reads the same column — if the client used
+        // a different (device) zone, the two could disagree on "today" at the
+        // midnight edge and reject a legitimate write. So converge the stored
+        // zone toward the device for the NEXT session (best-effort), but keep
+        // THIS session's boundary on the committed value.
         const deviceTz = resolveDeviceTimezone();
-        let effectiveTz = profile.timezone;
         if (deviceTz && deviceTz !== profile.timezone) {
-          effectiveTz = deviceTz;
           updateProfileTimezone(userId, deviceTz).catch((err) =>
             console.warn('Timezone sync failed (non-fatal)', err),
           );
         }
+        const effectiveTz = profile.timezone;
         const localToday = localDateToday(effectiveTz);
         const comp = await findActiveCompetition();
         const logs = comp ? await loadUserLogs(comp.id, userId) : {};
