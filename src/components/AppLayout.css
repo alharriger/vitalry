@@ -14,10 +14,16 @@
 .vt-app__screen {
   flex: 1;
   overflow-y: auto;
+  /* Keep a rubber-band overscroll from exposing (and flashing) the canvas
+     behind the column. */
+  overscroll-behavior: contain;
   padding: var(--screen-pad);
   /* Leave room so content never hides behind the pinned tab bar. */
   padding-bottom: calc(var(--tabbar-h) + var(--space-6));
 }
+/* While a bottom sheet is open, freeze the background scroll so the content
+   under the scrim can't move or repaint beneath the fixed overlay. */
+body.vt-sheet-open .vt-app__screen { overflow: hidden; }
 /* Read-only past day: the entire column tints to the archived surface, so the
    locked day reads as one continuous fill top-to-bottom with no seam. The
    .vt-app__screen is transparent, so this shows through the scroll area. */

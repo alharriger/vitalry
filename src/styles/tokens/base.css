@@ -12,6 +12,18 @@
   box-sizing: border-box;
 }
 
+/* The app is a light-only design. Declaring the color scheme (and painting the
+   root canvas cream) stops a dark-mode device from flashing its default dark
+   canvas behind the notch / in the overscroll strip when a fixed overlay (any
+   BottomSheet) opens or closes — the "top of the screen glitches color" report.
+   viewport-fit=cover means the safe-area strip is painted from <html>. */
+:root {
+  color-scheme: light;
+}
+html {
+  background: var(--surface-app);
+}
+
 body {
   margin: 0;
   background: var(--surface-app);

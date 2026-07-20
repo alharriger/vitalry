@@ -71,8 +71,22 @@ describe('computeStandings', () => {
     expect(p.doneToday).toBe(9);
     expect(p.currentStreak).toBe(3);
     expect(p.perfectDays).toBe(3);
+    expect(p.todayClass).toBe('perfect'); // 9/9 today → perfect (colors the pips)
     // A per-day breakdown spanning the full window is present for the sheet.
     expect(p.days).toHaveLength(3);
+  });
+
+  it('classifies today for the pip color (active / some / nothing)', () => {
+    const mk = (n: number) => computeStandings({
+      members: [member('u1', 'A')],
+      logsByUser: { u1: { [TODAY]: nDone(n) } },
+      startDate: START,
+      today: TODAY,
+      viewerId: null,
+    })[0].todayClass;
+    expect(mk(6)).toBe('active');
+    expect(mk(3)).toBe('some');
+    expect(mk(0)).toBe('nothing');
   });
 
   it('breaks ties by perfect days, then longest streak', () => {

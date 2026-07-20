@@ -16,7 +16,9 @@
 import {
   countDone,
   currentPerfectStreak,
+  dayClass,
   scoreCompetition,
+  type DayClass,
   type DayScoreResult,
   type ScoringRules,
 } from './scoring';
@@ -42,6 +44,8 @@ export interface PlayerStanding {
   currentStreak: number;
   /** Goals completed today (the 9-pip "today" tracker). */
   doneToday: number;
+  /** Today's day class — colors the "today" pips (perfect/active/some/nothing). */
+  todayClass: DayClass;
   /** Whether this row is the viewer. */
   isYou: boolean;
   /** Per-day breakdown across the window (drives the breakdown sheet). */
@@ -82,6 +86,7 @@ export function computeStandings(input: ComputeStandingsInput): PlayerStanding[]
   const scored: PlayerStanding[] = members.map((m) => {
     const logs = logsByUser[m.userId] ?? {};
     const standing = scoreCompetition({ startDate, asOf, logsByDate: logs, rules });
+    const doneToday = countDone(logs[today]);
     return {
       userId: m.userId,
       name: m.name,
@@ -91,7 +96,8 @@ export function computeStandings(input: ComputeStandingsInput): PlayerStanding[]
       perfectDays: standing.perfectDays,
       longestStreak: standing.longestStreak,
       currentStreak: currentPerfectStreak(standing.days, today),
-      doneToday: countDone(logs[today]),
+      doneToday,
+      todayClass: dayClass(doneToday, rules),
       isYou: viewerId != null && m.userId === viewerId,
       days: standing.days,
     };

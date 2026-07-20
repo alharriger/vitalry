@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
-import { DAILY_9 } from '../../lib/goals';
+import type { DayClass } from '../../lib/scoring';
 import './LeaderboardRow.css';
 
 export interface LeaderboardRowProps
@@ -9,8 +9,10 @@ export interface LeaderboardRowProps
   name: string;
   /** Total competition points. */
   points: number;
-  /** Goals completed today — fills the 9-pip "today" tracker. */
+  /** Goals completed today — the number of filled "today" pips. */
   doneToday: number;
+  /** Today's day class — the color the filled pips take (see design tokens). */
+  todayClass: DayClass;
   /** Total goals (9 in v1) — the number of pips. */
   total?: number;
   /** Current streak; the flame goes gray at 0. */
@@ -23,8 +25,17 @@ export interface LeaderboardRowProps
   onOpen: () => void;
 }
 
-/** The nine Daily-9 category colors, in order — the filled-pip palette. */
-const GOAL_COLORS = DAILY_9.map((g) => g.color);
+/**
+ * Filled-pip color by today's day class — one meaning, not nine goal hues
+ * (Amber's Phase-3 call): gold = perfect, dark green = active (6+), light green
+ * = some, and nothing shows as the empty beige track.
+ */
+const PIP_FILL: Record<DayClass, string> = {
+  perfect: 'var(--gold)',
+  active: 'var(--green-600)',
+  some: 'var(--green-300)',
+  nothing: 'transparent',
+};
 
 /** Two-letter initials from a name (first + last), for the avatar. */
 function initials(name: string): string {
@@ -44,6 +55,7 @@ export function LeaderboardRow({
   name,
   points,
   doneToday,
+  todayClass,
   total = 9,
   streak,
   isYou = false,
@@ -54,6 +66,7 @@ export function LeaderboardRow({
 }: LeaderboardRowProps) {
   const cls = ['vt-lb', isYou ? 'vt-lb--you' : '', className].filter(Boolean).join(' ');
   const filled = Math.max(0, Math.min(doneToday, total));
+  const pipColor = PIP_FILL[todayClass];
 
   return (
     <button
@@ -79,7 +92,7 @@ export function LeaderboardRow({
             <span
               key={i}
               className="vt-lb__pip"
-              style={i < filled ? { background: GOAL_COLORS[i % GOAL_COLORS.length] } : undefined}
+              style={i < filled ? { background: pipColor } : undefined}
             />
           ))}
         </span>

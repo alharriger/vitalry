@@ -41,6 +41,14 @@ export function BottomSheet({ open, onClose, ariaLabel, handleContent, children 
   // doesn't thrash React state on every pointer move.
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // Freeze the background scroll while the sheet is open (correct modal behavior;
+  // also stops the content under the scrim from repainting/flashing).
+  useEffect(() => {
+    if (!open) return;
+    document.body.classList.add('vt-sheet-open');
+    return () => document.body.classList.remove('vt-sheet-open');
+  }, [open]);
+
   // Focus management + Escape-to-close, only while open.
   useEffect(() => {
     if (!open) return;

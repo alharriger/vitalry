@@ -62,7 +62,12 @@ export function StandingsScreen() {
             {daysLabel}
           </Badge>
           {competition?.prizeText ? (
-            <Badge variant="tint" color="var(--sun-400)" icon="ph-fill ph-trophy">
+            <Badge
+              variant="tint"
+              color="var(--sun-400)"
+              icon="ph-fill ph-trophy"
+              className="vt-standings__prize"
+            >
               {competition.prizeText}
             </Badge>
           ) : null}
@@ -77,6 +82,7 @@ export function StandingsScreen() {
             name={p.name}
             points={p.totalScore}
             doneToday={p.doneToday}
+            todayClass={p.todayClass}
             total={goalCount}
             streak={p.currentStreak}
             isYou={p.isYou}

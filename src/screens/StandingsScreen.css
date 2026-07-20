@@ -14,9 +14,19 @@
 .vt-standings__badges {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+/* The prize is free text and can be long — let it wrap and stay inside the
+   screen padding (right edge aligned with the leaderboard) instead of a single
+   nowrap pill overflowing off-screen. */
+.vt-standings__prize {
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  line-height: var(--lh-snug);
 }
 
 .vt-standings__list {

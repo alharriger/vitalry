@@ -131,13 +131,14 @@ async function main() {
   }
   console.log(`  ✓ Amber: ${amberId}`);
 
-  // 2) Ensure her profile has a name + timezone (the handle_new_user trigger
-  //    creates the row; make sure it reads nicely for the greeting).
+  // 2) Ensure her profile reads nicely (the handle_new_user trigger creates the
+  //    row with an email-derived default name). This is dev seed data, so set a
+  //    friendly display name deterministically; real per-user name editing is
+  //    the profile editor (see the display-name feature).
   await admin
     .from('profiles')
     .update({ name: 'Amber', timezone: TIMEZONE })
-    .eq('id', amberId)
-    .is('name', null); // only fill when unset — don't clobber a name she chose
+    .eq('id', amberId);
 
   // 3) Find-or-create the group (owned by Amber).
   let groupId: string;
