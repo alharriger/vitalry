@@ -156,3 +156,27 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   auto-wait) whenever the interaction allows it; only drop to raw `page.mouse` for gestures they can't
   express (e.g. a partial swipe), and settle first.
 - **Status:** Active
+
+## iOS status-bar strip flickers when a full-screen scrim covers the safe-area top
+- **What happened:** Opening/closing any bottom sheet (month picker on Today, breakdown on
+  Standings) flickered the coloring at the very top of the screen on Amber's iPhone — "the color
+  isn't loading at the same time." Three fixes missed because they targeted the wrong layer:
+  `color-scheme: light` + painting the `<html>` canvas (no effect), then `theme-color` cream +
+  portaling the sheet to `<body>` (no effect).
+- **Root cause:** Two things together. (1) The app had **no `env(safe-area-inset-top)` handling** at
+  all (only a 20px `--screen-pad`), so on a notched iPhone the top ~status-bar strip was an
+  undefined region with content sitting under it. (2) The sheet's dark **scrim was `inset: 0` — it
+  covered that strip** and animated its opacity, so iOS recomposited/re-tinted the status-bar
+  backdrop (and can flip its glyph tint) on its own layer each frame, out of step with the rest.
+  The audit that found it: a **Playwright WebKit** (Safari-engine) probe showed html/body/`.vt-app`
+  backgrounds perfectly in sync every frame and the scrim covering the full viewport — proving it
+  was NOT a CSS/DOM desync but an on-device compositing artifact at the safe-area strip (invisible
+  in any headless engine; WebKit doesn't emulate the notch inset).
+- **Prevention rule:** With `viewport-fit=cover`, (a) always pad content for
+  `env(safe-area-inset-top)` so the top strip is a defined app-background region, and (b) never let a
+  full-screen animated overlay cover the status-bar strip — start the scrim at
+  `top: env(safe-area-inset-top, 0px)` so that strip stays a stable app-coloured region (only the
+  content below dims, the standard iOS modal pattern). Reproduce iOS-only paint issues with
+  Playwright **WebKit**, not Chromium; when even WebKit can't show it, suspect a real-device
+  safe-area / status-bar-chrome compositing effect, not a CSS bug.
+- **Status:** Active

@@ -18,12 +18,14 @@
      behind the column. */
   overscroll-behavior: contain;
   padding: var(--screen-pad);
+  /* Clear the status-bar / notch strip (viewport-fit=cover) so content is never
+     under it and the top strip is a well-defined app-background region — without
+     this the top ~status-bar area is undefined and iOS repaints it out of step
+     with the rest when a full-screen sheet opens/closes (the "top glitch"). */
+  padding-top: calc(var(--screen-pad) + env(safe-area-inset-top, 0px));
   /* Leave room so content never hides behind the pinned tab bar. */
   padding-bottom: calc(var(--tabbar-h) + var(--space-6));
 }
-/* While a bottom sheet is open, freeze the background scroll so the content
-   under the scrim can't move or repaint beneath the fixed overlay. */
-body.vt-sheet-open .vt-app__screen { overflow: hidden; }
 /* Read-only past day: the entire column tints to the archived surface, so the
    locked day reads as one continuous fill top-to-bottom with no seam. The
    .vt-app__screen is transparent, so this shows through the scroll area. */
