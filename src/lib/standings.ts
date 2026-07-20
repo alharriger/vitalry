@@ -16,12 +16,11 @@
 import {
   countDone,
   currentPerfectStreak,
-  dayClass,
   scoreCompetition,
-  type DayClass,
   type DayScoreResult,
   type ScoringRules,
 } from './scoring';
+import { DAILY_9, isGoalDone } from './goals';
 import { colorForName } from './avatarColor';
 import type { CompetitionMember } from './dailyLogs';
 import type { GoalStates } from '../types';
@@ -42,10 +41,10 @@ export interface PlayerStanding {
   longestStreak: number;
   /** Current perfect-day run ending today (the flame). */
   currentStreak: number;
-  /** Goals completed today (the 9-pip "today" tracker). */
+  /** Goals completed today (count — the length of `doneKeysToday`). */
   doneToday: number;
-  /** Today's day class — colors the "today" pips (perfect/active/some/nothing). */
-  todayClass: DayClass;
+  /** Which Daily-9 goal keys are complete today — lights each pip in its color. */
+  doneKeysToday: Set<string>;
   /** Whether this row is the viewer. */
   isYou: boolean;
   /** Per-day breakdown across the window (drives the breakdown sheet). */
@@ -86,7 +85,11 @@ export function computeStandings(input: ComputeStandingsInput): PlayerStanding[]
   const scored: PlayerStanding[] = members.map((m) => {
     const logs = logsByUser[m.userId] ?? {};
     const standing = scoreCompetition({ startDate, asOf, logsByDate: logs, rules });
-    const doneToday = countDone(logs[today]);
+    const todayStates = logs[today];
+    // Which specific goals are done today — one lit pip per goal, its own color.
+    const doneKeysToday = new Set(
+      DAILY_9.filter((g) => isGoalDone(g, todayStates?.[g.key])).map((g) => g.key),
+    );
     return {
       userId: m.userId,
       name: m.name,
@@ -96,8 +99,8 @@ export function computeStandings(input: ComputeStandingsInput): PlayerStanding[]
       perfectDays: standing.perfectDays,
       longestStreak: standing.longestStreak,
       currentStreak: currentPerfectStreak(standing.days, today),
-      doneToday,
-      todayClass: dayClass(doneToday, rules),
+      doneToday: countDone(todayStates),
+      doneKeysToday,
       isYou: viewerId != null && m.userId === viewerId,
       days: standing.days,
     };

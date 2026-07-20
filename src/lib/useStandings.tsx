@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from './auth';
 import { useTodayLog } from './useTodayLog';
 import { getSupabase } from './supabase';
@@ -55,13 +55,6 @@ export function useStandings(): StandingsState {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Latest logs, so the realtime handler can do an immutable merge without being
-  // re-bound on every change (the subscription is set up once per competition).
-  const logsRef = useRef(logsByUser);
-  useEffect(() => {
-    logsRef.current = logsByUser;
-  }, [logsByUser]);
-
   // --- Initial load (members + everyone's logs) ----------------------------
   useEffect(() => {
     // Wait for the shared day fetch to resolve the competition first.
@@ -88,7 +81,6 @@ export function useStandings(): StandingsState {
         if (cancelled) return;
         setMembers(mem);
         setLogsByUser(logs);
-        logsRef.current = logs;
       } catch (err) {
         if (cancelled) return;
         console.error('Failed to load standings', err);

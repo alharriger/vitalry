@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
-import type { DayClass } from '../../lib/scoring';
+import { DAILY_9 } from '../../lib/goals';
 import './LeaderboardRow.css';
 
 export interface LeaderboardRowProps
@@ -9,12 +9,12 @@ export interface LeaderboardRowProps
   name: string;
   /** Total competition points. */
   points: number;
-  /** Goals completed today — the number of filled "today" pips. */
-  doneToday: number;
-  /** Today's day class — the color the filled pips take (see design tokens). */
-  todayClass: DayClass;
-  /** Total goals (9 in v1) — the number of pips. */
-  total?: number;
+  /**
+   * Which of the Daily 9 are complete today, keyed by goal key. Each done goal
+   * lights its own pip in that goal's category color — a glanceable proof of
+   * what the player checked off today (never raw stats).
+   */
+  doneKeysToday: Set<string>;
   /** Current streak; the flame goes gray at 0. */
   streak: number;
   /** Highlight this row as the current player. */
@@ -24,18 +24,6 @@ export interface LeaderboardRowProps
   /** Open this player's day-by-day breakdown. */
   onOpen: () => void;
 }
-
-/**
- * Filled-pip color by today's day class — one meaning, not nine goal hues
- * (Amber's Phase-3 call): gold = perfect, dark green = active (6+), light green
- * = some, and nothing shows as the empty beige track.
- */
-const PIP_FILL: Record<DayClass, string> = {
-  perfect: 'var(--gold)',
-  active: 'var(--green-600)',
-  some: 'var(--green-300)',
-  nothing: 'transparent',
-};
 
 /** Two-letter initials from a name (first + last), for the avatar. */
 function initials(name: string): string {
@@ -54,9 +42,7 @@ export function LeaderboardRow({
   rank,
   name,
   points,
-  doneToday,
-  todayClass,
-  total = 9,
+  doneKeysToday,
   streak,
   isYou = false,
   avatarColor,
@@ -65,15 +51,14 @@ export function LeaderboardRow({
   ...rest
 }: LeaderboardRowProps) {
   const cls = ['vt-lb', isYou ? 'vt-lb--you' : '', className].filter(Boolean).join(' ');
-  const filled = Math.max(0, Math.min(doneToday, total));
-  const pipColor = PIP_FILL[todayClass];
+  const doneToday = DAILY_9.reduce((n, g) => (doneKeysToday.has(g.key) ? n + 1 : n), 0);
 
   return (
     <button
       type="button"
       className={cls}
       onClick={onOpen}
-      aria-label={`${name}${isYou ? ' (you)' : ''}, rank ${rank}, ${points} points, ${doneToday} of ${total} goals today, streak ${streak}. See breakdown.`}
+      aria-label={`${name}${isYou ? ' (you)' : ''}, rank ${rank}, ${points} points, ${doneToday} of ${DAILY_9.length} goals today, streak ${streak}. See breakdown.`}
       {...rest}
     >
       <span className={`vt-lb__rank vt-lb__rank--${rank <= 3 ? rank : 'n'}`} aria-hidden="true">
@@ -88,11 +73,11 @@ export function LeaderboardRow({
           {isYou ? <span className="vt-lb__you-tag">You</span> : null}
         </span>
         <span className="vt-lb__pips" aria-hidden="true">
-          {Array.from({ length: total }, (_, i) => (
+          {DAILY_9.map((g) => (
             <span
-              key={i}
+              key={g.key}
               className="vt-lb__pip"
-              style={i < filled ? { background: pipColor } : undefined}
+              style={doneKeysToday.has(g.key) ? { background: g.color } : undefined}
             />
           ))}
         </span>

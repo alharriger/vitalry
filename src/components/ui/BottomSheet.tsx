@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import './BottomSheet.css';
 
 export interface BottomSheetProps {
@@ -134,7 +135,9 @@ export function BottomSheet({ open, onClose, ariaLabel, handleContent, children 
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so the fixed scrim always covers the full viewport — never
+  // clipped or two-toned by an ancestor's stacking/containing context.
+  return createPortal(
     <div className="vt-sheet" role="presentation">
       <div className="vt-sheet__scrim" onClick={onClose} aria-hidden="true" />
 
@@ -156,6 +159,7 @@ export function BottomSheet({ open, onClose, ariaLabel, handleContent, children 
 
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -81,9 +81,7 @@ export function StandingsScreen() {
             rank={p.rank}
             name={p.name}
             points={p.totalScore}
-            doneToday={p.doneToday}
-            todayClass={p.todayClass}
-            total={goalCount}
+            doneKeysToday={p.doneKeysToday}
             streak={p.currentStreak}
             isYou={p.isYou}
             avatarColor={p.avatarColor}

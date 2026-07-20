@@ -71,22 +71,30 @@ describe('computeStandings', () => {
     expect(p.doneToday).toBe(9);
     expect(p.currentStreak).toBe(3);
     expect(p.perfectDays).toBe(3);
-    expect(p.todayClass).toBe('perfect'); // 9/9 today → perfect (colors the pips)
     // A per-day breakdown spanning the full window is present for the sheet.
     expect(p.days).toHaveLength(3);
   });
 
-  it('classifies today for the pip color (active / some / nothing)', () => {
-    const mk = (n: number) => computeStandings({
+  it('surfaces exactly which goals are done today (one lit pip per goal)', () => {
+    // First 3 of the Daily 9 done today (rainbow counter + protein + fiber).
+    const [p] = computeStandings({
       members: [member('u1', 'A')],
-      logsByUser: { u1: { [TODAY]: nDone(n) } },
+      logsByUser: { u1: { [TODAY]: nDone(3) } },
       startDate: START,
       today: TODAY,
       viewerId: null,
-    })[0].todayClass;
-    expect(mk(6)).toBe('active');
-    expect(mk(3)).toBe('some');
-    expect(mk(0)).toBe('nothing');
+    });
+    expect(p.doneToday).toBe(3);
+    expect(p.doneKeysToday).toEqual(new Set(['rainbow', 'protein', 'fiber']));
+    // A partially-filled counter goal does NOT light its pip.
+    const [q] = computeStandings({
+      members: [member('u1', 'A')],
+      logsByUser: { u1: { [TODAY]: { rainbow: 4, protein: true } } }, // rainbow below its target of 5
+      startDate: START,
+      today: TODAY,
+      viewerId: null,
+    });
+    expect(q.doneKeysToday).toEqual(new Set(['protein']));
   });
 
   it('breaks ties by perfect days, then longest streak', () => {
