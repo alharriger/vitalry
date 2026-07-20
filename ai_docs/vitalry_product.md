@@ -135,8 +135,18 @@ durations · raw-stat comparisons (**permanent**) · chat/comments · photo proo
       competition, tap-through to its day browser). Lands in **Phase 5**; reuses the Phase 2
       day-browser.
 
+**Decided by Amber 2026-07-20:**
+- ✅ **Leaderboard breakdown of others = scores per day only** (day-by-day bar chart + totals; never
+      which goals). Resolves the open Phase 3 question in favour of the honor system. Also: the
+      leaderboard "today" pips show **today's day class** (perfect/active/some/nothing colors), not the
+      nine goal hues.
+- ✅ **Display-name editing → a small Settings screen.** Users set their own name there (name first;
+      avatar + reminder time grow into it later, Phase 6). Built as the small piece **right after
+      Phase 3** merges — not bundled into the leaderboard.
+- ✅ **Prize text is length-capped** (≈40 chars, finalize in Phase 4) so it fits one line on most
+      phones — enforced in the Phase 4 competition-setup form (+ ideally a DB check constraint).
+
 **Still open:**
-- [ ] **Leaderboard detail of others:** counts + tap-through breakdown (recommended) vs
-      broadcasting individual goals. Decide during Phase 3 design.
+- (none currently — the Phase 3 leaderboard-detail question above is resolved.)
 - [ ] **Month-sheet boundary (design open item):** one month with prev/next chevrons vs. a single
       `start_date → today` grid, since a 30-day game can straddle two months. Decide during Phase 2 build.

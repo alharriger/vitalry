@@ -111,11 +111,22 @@ When Phase 5 lands, add a dated "safe to remove" line and clear the docs in that
 The `app-reference/` (StandingsScreen/BreakdownSheet reference) is consumed by Phase 3 — same
 disposition once Phase 3 ships and no later phase references it.
 
+## Next piece after Phase 3 (Amber's call, 2026-07-20)
+- **Small Settings screen with a display-name editor.** Every user needs to set their own display
+  name (right now names are seed-set; a leaderboard is names-first). Build a minimal Settings/Profile
+  screen — **name now**, with room to grow (avatar, reminder time → Phase 6). Needs a new entry point
+  (gear, or tapping your avatar). Its own branch/lifecycle **after Phase 3 merges** (not bundled into
+  the leaderboard). Writes `profiles.name` (RLS `profiles_update` already allows self-update).
+
 ## Phase 1 carry-overs into later phases
 - **Phase 4 needs a creator-becomes-organizer trigger/policy.** `group_members` INSERT requires
   organizer, so a client can't bootstrap a usable group yet. Harmless now (seeded via service_role;
   group-creation UX is Phase 4) — Phase 4 must add a trigger making a group's creator its first
   organizer, or an INSERT policy allowing self-add as organizer.
+- **Phase 4 — cap `prize_text` length** (Amber, 2026-07-20). The Standings prize badge wraps
+  gracefully now, but prizes should be short enough to sit on ONE line on most phones. The
+  competition-setup form must enforce a max length (**≈40 chars** — finalize against the badge at
+  ~360px width), ideally backed by a DB `check (char_length(prize_text) <= N)`. Keep the copy tight.
 - **Phase 6:** trim Phosphor's unused ttf/woff/svg fallbacks so they aren't emitted to `dist`.
 
 ## Infra live (done 2026-07-17)
