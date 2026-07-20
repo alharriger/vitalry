@@ -11,7 +11,8 @@
  */
 
 import { getSupabase } from './supabase';
-import { localDateToday, previousLocalDate, type ScoringRules } from './scoring';
+import { localDateRange, localDateToday, previousLocalDate, type ScoringRules } from './scoring';
+import { DAILY_9 } from './goals';
 import type { GoalStates } from '../types';
 
 /**
@@ -25,12 +26,25 @@ const E2E = import.meta.env.VITE_E2E === 'true';
 export interface ActiveCompetition {
   id: string;
   name: string;
+  /** Owning group — the membership scope for the leaderboard's player list. */
+  groupId: string;
   /** Competition start, `'YYYY-MM-DD'`. The scoring window's left edge. */
   startDate: string;
   durationDays: number;
+  /** Optional free-text prize (organizer-set); null until entered. */
+  prizeText: string | null;
   /** Frozen scoring snapshot; null until an organizer sets it (falls back to
    *  `DEFAULT_SCORING_RULES` in the engine). */
   scoringRules: ScoringRules | null;
+}
+
+/** One member of a competition's group — a player row on the leaderboard. */
+export interface CompetitionMember {
+  userId: string;
+  /** Display name (from `profiles.name`); falls back for a blank profile. */
+  name: string;
+  /** Chosen avatar token/hex, or null → derive a deterministic color from name. */
+  avatar: string | null;
 }
 
 /** The viewer's minimal profile — name for the greeting, timezone for the day
@@ -93,12 +107,20 @@ export async function findActiveCompetition(): Promise<ActiveCompetition | null>
     // A stub in-progress game; start a few days back so "today" is safely
     // inside the window whatever the runner's timezone.
     const start = previousLocalDate(previousLocalDate(previousLocalDate(localDateToday())));
-    return { id: 'e2e-competition', name: 'E2E Competition', startDate: start, durationDays: 14, scoringRules: null };
+    return {
+      id: 'e2e-competition',
+      name: 'E2E Competition',
+      groupId: 'e2e-group',
+      startDate: start,
+      durationDays: 14,
+      prizeText: 'Bragging rights',
+      scoringRules: null,
+    };
   }
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from('competitions')
-    .select('id, name, start_date, duration_days, scoring_rules')
+    .select('id, name, group_id, start_date, duration_days, prize_text, scoring_rules')
     .eq('status', 'active')
     .order('start_date', { ascending: true })
     .limit(1);
@@ -108,8 +130,10 @@ export async function findActiveCompetition(): Promise<ActiveCompetition | null>
   return {
     id: row.id,
     name: row.name,
+    groupId: row.group_id,
     startDate: row.start_date,
     durationDays: row.duration_days,
+    prizeText: (row.prize_text as string | null) ?? null,
     scoringRules: (row.scoring_rules as ScoringRules | null) ?? null,
   };
 }
@@ -137,6 +161,85 @@ export async function loadUserLogs(
     byDate[row.local_date as string] = (row.goal_states as GoalStates) ?? {};
   }
   return byDate;
+}
+
+/**
+ * A `goal_states` marking the first `n` of the Daily 9 done (counter goals
+ * filled to max so they count via `isGoalDone`). Shared shape with the seed;
+ * used only to build E2E stub data below.
+ */
+function stubGoalStates(n: number): GoalStates {
+  const states: GoalStates = {};
+  DAILY_9.slice(0, n).forEach((g) => {
+    states[g.key] = g.logType === 'counter' ? (g.counterMax ?? 1) : true;
+  });
+  return states;
+}
+
+/**
+ * Load the members of a competition's group — the leaderboard's player list.
+ * RLS (`group_members_select` + `profiles_select`) already scopes this to
+ * co-members of a group the viewer belongs to, so no client-side trust needed.
+ */
+export async function loadCompetitionMembers(groupId: string): Promise<CompetitionMember[]> {
+  if (E2E) {
+    return [
+      { userId: 'e2e-user', name: 'Amber', avatar: null },
+      { userId: 'e2e-dad', name: 'Dad', avatar: null },
+      { userId: 'e2e-mom', name: 'Mom', avatar: null },
+    ];
+  }
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('group_members')
+    .select('user_id, profiles ( name, avatar )')
+    .eq('group_id', groupId);
+  if (error) throw error;
+  return (data ?? []).map((row) => {
+    // The embedded profile arrives as an object (one-to-one), but supabase-js
+    // types it as possibly-array — normalize either shape.
+    const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    return {
+      userId: row.user_id as string,
+      name: (p?.name as string | null)?.trim() || 'Player',
+      avatar: (p?.avatar as string | null) ?? null,
+    };
+  });
+}
+
+/**
+ * Load every player's logs for a competition, as `{ userId: { date: states } }`.
+ * RLS (`daily_logs_select`) permits reading ALL logs in a competition the viewer
+ * belongs to — this is exactly the leaderboard read the policy was written for.
+ */
+export async function loadCompetitionLogs(
+  competitionId: string,
+): Promise<Record<string, Record<string, GoalStates>>> {
+  if (E2E) {
+    // A deterministic 3-player board over the E2E window (start = today−3).
+    // Amber leads on a 3-perfect-day run; Dad is steadily active; Mom is mixed.
+    const today = localDateToday();
+    const start = previousLocalDate(previousLocalDate(previousLocalDate(today)));
+    const [d0, d1, d2] = localDateRange(start, previousLocalDate(today)); // 3 past days
+    const byUser: Record<string, Record<string, GoalStates>> = {
+      'e2e-user': { [d0]: stubGoalStates(9), [d1]: stubGoalStates(9), [d2]: stubGoalStates(9), [today]: stubGoalStates(4) },
+      'e2e-dad': { [d0]: stubGoalStates(7), [d1]: stubGoalStates(6), [d2]: stubGoalStates(8), [today]: stubGoalStates(6) },
+      'e2e-mom': { [d0]: stubGoalStates(3), [d1]: stubGoalStates(9), [d2]: stubGoalStates(5), [today]: stubGoalStates(2) },
+    };
+    return byUser;
+  }
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('daily_logs')
+    .select('user_id, local_date, goal_states')
+    .eq('competition_id', competitionId);
+  if (error) throw error;
+  const byUser: Record<string, Record<string, GoalStates>> = {};
+  for (const row of data ?? []) {
+    const uid = row.user_id as string;
+    (byUser[uid] ??= {})[row.local_date as string] = (row.goal_states as GoalStates) ?? {};
+  }
+  return byUser;
 }
 
 /**

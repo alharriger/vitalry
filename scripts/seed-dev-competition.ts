@@ -31,10 +31,27 @@ process.loadEnvFile(); // load ./.env into process.env
 const AMBER_EMAIL = 'alharriger@gmail.com';
 const GROUP_NAME = 'Harriger Family';
 const COMPETITION_NAME = 'Harriger Summer Streak';
+const COMPETITION_PRIZE = 'Bragging rights + the loser cooks Sunday dinner';
 const TIMEZONE = 'America/New_York';
 /** Days before today the competition starts (so today is "Day 22 of 30"). */
 const START_OFFSET_DAYS = 21;
 const DURATION_DAYS = 30;
+
+/**
+ * Fake "family" members so the Phase 3 leaderboard has a real multi-player board
+ * on the phone. All share the `@seed.vitalry.dev` domain so they're obviously
+ * dev-only and can be bulk-removed before the real family beta:
+ *   delete from auth.users where email like '%@seed.vitalry.dev';  (cascades)
+ * Each has a distinct done-count cycle so the standings rank clearly (Sofia
+ * leads on near-perfect days; Ben is sporadic with no streak; etc.). Unlike
+ * Amber's, their logs are backfilled through TODAY so the board looks live.
+ */
+const DEV_MEMBERS: { email: string; name: string; cycle: number[] }[] = [
+  { email: 'sofia@seed.vitalry.dev', name: 'Sofia', cycle: [9, 9, 8, 9, 9, 7, 9, 9, 9, 8] },
+  { email: 'dad@seed.vitalry.dev', name: 'Dad', cycle: [7, 8, 6, 8, 7, 6, 8, 7, 6, 8] },
+  { email: 'mom@seed.vitalry.dev', name: 'Mom', cycle: [6, 4, 7, 5, 9, 3, 6, 5, 7, 4] },
+  { email: 'ben@seed.vitalry.dev', name: 'Ben', cycle: [3, 0, 8, 2, 5, 0, 9, 1, 4, 6] },
+];
 
 /** Subtract `n` whole local days from a `'YYYY-MM-DD'` date. */
 function minusDays(date: string, n: number): string {
@@ -89,6 +106,15 @@ async function findAuthUserId(email: string): Promise<string | null> {
     if (data.users.length < 200) break; // last page
   }
   return null;
+}
+
+/** Find-or-create a confirmed auth user by email (for the dev family members). */
+async function ensureAuthUser(email: string): Promise<string> {
+  const existing = await findAuthUserId(email);
+  if (existing) return existing;
+  const { data, error } = await admin.auth.admin.createUser({ email, email_confirm: true });
+  if (error) throw error;
+  return data.user.id;
 }
 
 async function main() {
@@ -169,6 +195,7 @@ async function main() {
       .update({
         status: 'active',
         scoring_rules: DEFAULT_SCORING_RULES,
+        prize_text: COMPETITION_PRIZE,
         start_date: startDate,
         duration_days: DURATION_DAYS,
       })
@@ -186,6 +213,7 @@ async function main() {
         duration_days: DURATION_DAYS,
         status: 'active',
         scoring_rules: DEFAULT_SCORING_RULES,
+        prize_text: COMPETITION_PRIZE,
       })
       .select('id')
       .single();
@@ -222,7 +250,39 @@ async function main() {
       `(${startDate} … ${twoDaysAgo})`,
   );
 
-  console.log('Done. Open Today and check in.');
+  // 7) Dev family members — a real multi-player board for the Phase 3 leaderboard.
+  //    Each is a confirmed auth user + profile + group member, with logs
+  //    backfilled through TODAY (service-role bypasses the grace trigger) so the
+  //    board looks live. A 0 in a cycle is a truly-missed day (no row).
+  const memberDays = startDate <= today ? localDateRange(startDate, today) : [];
+  for (const m of DEV_MEMBERS) {
+    const uid = await ensureAuthUser(m.email);
+    // The handle_new_user trigger creates the profile row; set a nice name + tz.
+    await admin.from('profiles').update({ name: m.name, timezone: TIMEZONE }).eq('id', uid);
+    await admin
+      .from('group_members')
+      .upsert({ group_id: groupId, user_id: uid, role: 'member' }, { onConflict: 'group_id,user_id' });
+
+    const memberRows = memberDays
+      .map((localDate, i) => ({ localDate, done: m.cycle[i % m.cycle.length] }))
+      .filter((d) => d.done > 0)
+      .map((d) => ({
+        competition_id: competitionId,
+        user_id: uid,
+        local_date: d.localDate,
+        goal_states: goalStatesForDoneCount(d.done),
+        updated_at: new Date().toISOString(),
+      }));
+    if (memberRows.length) {
+      const { error } = await admin
+        .from('daily_logs')
+        .upsert(memberRows, { onConflict: 'competition_id,user_id,local_date' });
+      if (error) throw error;
+    }
+    console.log(`  ✓ Member ${m.name} (${uid}): ${memberRows.length} logged day(s)`);
+  }
+
+  console.log('Done. Open Today and check in, then Standings for the board.');
 }
 
 main().catch((err) => {

@@ -24,6 +24,7 @@ import {
   nextLocalDate,
   scoreCompetition,
   scoreDay,
+  currentPerfectStreak,
   type DayClass,
   type DayScoreResult,
 } from './scoring';
@@ -375,19 +376,9 @@ export function TodayLogProvider({ children }: { children: ReactNode }) {
     const classes: Record<string, DayClass> = {};
     for (const d of standing.days) classes[d.localDate] = d.dayClass;
 
-    // Current streak = trailing run of perfect days ending at today. An
-    // in-progress today that isn't perfect *yet* must not zero out a live
-    // streak — the day isn't lost until it ends — so when today is still
-    // incomplete we count the run ending at yesterday; a perfect today extends it.
-    let streak = 0;
-    let i = standing.days.length - 1;
-    if (i >= 0 && standing.days[i].localDate === today && !standing.days[i].isPerfect) {
-      i -= 1;
-    }
-    for (; i >= 0; i -= 1) {
-      if (standing.days[i].isPerfect) streak += 1;
-      else break;
-    }
+    // Current streak = trailing run of perfect days ending at today (the flame).
+    // Shared helper so Today and the leaderboard never diverge on this.
+    const streak = currentPerfectStreak(standing.days, today);
     return { todayResult: tResult, viewedResult: vResult, currentStreak: streak, classByDate: classes };
   }, [competition, logsByDate, today, viewedDate]);
 

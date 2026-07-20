@@ -6,6 +6,7 @@ import {
   dayClass,
   scoreDay,
   scoreCompetition,
+  currentPerfectStreak,
   localDateToday,
   previousLocalDate,
   nextLocalDate,
@@ -367,6 +368,62 @@ describe('localDateRange', () => {
 
   it('rejects an invalid endpoint before walking', () => {
     expect(() => localDateRange('2026-01-01', '2026-13-01')).toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// currentPerfectStreak — the live "flame" run ending at asOf
+// ---------------------------------------------------------------------------
+
+describe('currentPerfectStreak', () => {
+  // Score a fixed window so we exercise the real DayScoreResult shape.
+  function daysFor(logsByDate: Record<string, GoalStates>, start: string, asOf: string) {
+    return scoreCompetition({ startDate: start, asOf, logsByDate }).days;
+  }
+
+  it('counts a trailing run of perfect days ending at asOf', () => {
+    const days = daysFor(
+      { '2026-01-01': perfect(), '2026-01-02': perfect(), '2026-01-03': perfect() },
+      '2026-01-01',
+      '2026-01-03',
+    );
+    expect(currentPerfectStreak(days, '2026-01-03')).toBe(3);
+  });
+
+  it('does NOT zero a live streak when the final day is in progress (not yet perfect)', () => {
+    // Two perfect days, then an incomplete "today" — the run through yesterday
+    // still stands (the day isn't lost until it ends).
+    const days = daysFor(
+      { '2026-01-01': perfect(), '2026-01-02': perfect(), '2026-01-03': nDone(4) },
+      '2026-01-01',
+      '2026-01-03',
+    );
+    expect(currentPerfectStreak(days, '2026-01-03')).toBe(2);
+  });
+
+  it('a perfect final day extends the run', () => {
+    const days = daysFor(
+      { '2026-01-01': perfect(), '2026-01-02': perfect(), '2026-01-03': perfect() },
+      '2026-01-01',
+      '2026-01-03',
+    );
+    expect(currentPerfectStreak(days, '2026-01-03')).toBe(3);
+  });
+
+  it('breaks on an earlier non-perfect day', () => {
+    const days = daysFor(
+      { '2026-01-01': perfect(), '2026-01-02': nDone(6), '2026-01-03': perfect() },
+      '2026-01-01',
+      '2026-01-03',
+    );
+    // Only the trailing perfect day counts; day 2 (active, not perfect) breaks it.
+    expect(currentPerfectStreak(days, '2026-01-03')).toBe(1);
+  });
+
+  it('is 0 with no trailing perfect day', () => {
+    const days = daysFor({ '2026-01-01': nDone(6) }, '2026-01-01', '2026-01-01');
+    expect(currentPerfectStreak(days, '2026-01-01')).toBe(0);
+    expect(currentPerfectStreak([], '2026-01-01')).toBe(0);
   });
 });
 

@@ -339,3 +339,28 @@ export function scoreCompetition(input: ScoreCompetitionInput): StandingResult {
 
   return { totalScore, perfectDays, longestStreak, activeDays, days };
 }
+
+/**
+ * The CURRENT run of consecutive perfect days ending at `asOf`, read off a
+ * scored day list (`StandingResult.days`). This is the live "flame" streak, and
+ * it is distinct from `longestStreak` (the best run anywhere in the window).
+ *
+ * CORRECTNESS: an in-progress `asOf` that is not perfect *yet* must not zero a
+ * live streak — the day isn't lost until it ends — so when `asOf` is the last
+ * day and still non-perfect, it's skipped and the run is counted through the
+ * prior day; a perfect `asOf` extends the run. Any earlier non-perfect day
+ * breaks it. Returns 0 when there is no trailing perfect day.
+ *
+ * Shared by Today's flame and the leaderboard so the two can never diverge.
+ */
+export function currentPerfectStreak(days: DayScoreResult[], asOf: string): number {
+  let i = days.length - 1;
+  // Skip an in-progress, not-yet-perfect final day so it doesn't zero the run.
+  if (i >= 0 && days[i].localDate === asOf && !days[i].isPerfect) i -= 1;
+  let streak = 0;
+  for (; i >= 0; i -= 1) {
+    if (days[i].isPerfect) streak += 1;
+    else break;
+  }
+  return streak;
+}

@@ -41,6 +41,14 @@
   --avatar-olive:    #6B8E4E;   /* @kind color */
   --avatar-lagoon:   #4C8C9E;   /* @kind color */
 
+  /* ---- Leaderboard medals (top-3 rank tiles) ----------------------------- */
+  --medal-gold-bg:   color-mix(in srgb, var(--sun-400) 26%, transparent);
+  --medal-gold-fg:   #8A6410;
+  --medal-silver-bg: #E4E6EA;
+  --medal-silver-fg: #7C818B;
+  --medal-bronze-bg: #F0E0CF;
+  --medal-bronze-fg: #A9702F;
+
   /* ---- Energy — streak flame & perfect-day gold -------------------------- */
   --flame-400: #F98A3C;
   --flame-500: #F1682E;   /* streak flame */

@@ -1,74 +1,7 @@
 /* Month-sheet date picker (handoff: date-nav-day-view, frame 2b). A bottom-sheet
-   heatmap of the whole competition. Tokens only; 44px+ tap targets on a phone. */
-
-.vt-sheet {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.vt-sheet__scrim {
-  position: absolute;
-  inset: 0;
-  background: var(--scrim);
-  animation: vt-sheet-fade var(--dur-base) var(--ease-out);
-}
-
-/* The sheet aligns to the app column, not the full desktop viewport. */
-.vt-sheet__panel {
-  position: relative;
-  width: 100%;
-  max-width: var(--screen-max);
-  background: var(--surface-card);
-  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-  /* 12px horizontal gutter (with the 4px grid gap below) keeps a 7-col day cell
-     ≥44px — the tap floor — down to ~360px-wide phones. */
-  padding: 12px 12px calc(22px + env(safe-area-inset-bottom, 0px));
-  box-shadow: var(--shadow-sheet);
-  animation: vt-sheet-rise var(--dur-slow) var(--ease-out);
-  /* Snap-back after an incomplete swipe; suppressed while the finger is down. */
-  transition: transform var(--dur-base) var(--ease-out);
-}
-.vt-sheet__panel--dragging { transition: none; }
-.vt-sheet__panel:focus { outline: none; }
-
-/* Drag handle — the whole grabber+header zone dismisses on a downward swipe.
-   touch-action:none so the browser doesn't scroll/gesture during the drag. */
-.vt-sheet__handle {
-  touch-action: none;
-  cursor: grab;
-}
-.vt-sheet__handle:active { cursor: grabbing; }
-
-/* Grabber doubles as a tap-to-close affordance. The visible bar is a thin 40×4
-   pill, but the clickable box is a full 44px-tall hit target (the tap floor);
-   the bar is drawn with a pseudo-element so the button can be larger than it. */
-.vt-sheet__grabber {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: var(--tap-min);
-  margin: 0 0 2px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-.vt-sheet__grabber::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--sand-300);
-}
-.vt-sheet__grabber:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+   heatmap of the whole competition. The sheet SHELL (scrim/panel/handle/grabber/
+   swipe/motion) lives in BottomSheet.css; this file styles only the picker's
+   content — header, weekday row, day grid, and legend. Tokens only; 44px+ taps. */
 
 .vt-sheet__header {
   display: flex;
@@ -226,20 +159,8 @@ button.vt-sheet__cell:focus-visible { outline: 3px solid var(--focus-ring); outl
   background: var(--evergreen);
 }
 
-/* ---- Motion ------------------------------------------------------------ */
-@keyframes vt-sheet-rise {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@keyframes vt-sheet-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* ---- Motion (cell-specific; the shell's motion lives in BottomSheet.css) - */
 @media (prefers-reduced-motion: reduce) {
-  .vt-sheet__scrim,
-  .vt-sheet__panel { animation: none; }
-  /* Keep the finger-follow during a live drag, but no snap-back easing. */
-  .vt-sheet__panel { transition: none; }
   .vt-sheet__cell { transition: none; }
   button.vt-sheet__cell:active { transform: none; }
 }

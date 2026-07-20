@@ -1,0 +1,35 @@
+/* Standings screen — the live leaderboard. Tokens only. */
+
+.vt-standings__header {
+  margin-bottom: var(--space-5);
+}
+.vt-standings__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-3xl);
+  letter-spacing: var(--ls-tight);
+  color: var(--text-primary);
+  margin: 0;
+}
+.vt-standings__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.vt-standings__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vt-standings__hint {
+  text-align: center;
+  font-family: var(--font-body);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: var(--space-5) 0 0;
+}

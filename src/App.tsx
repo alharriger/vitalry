@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
 import { TodayScreen } from './screens/TodayScreen';
+import { StandingsScreen } from './screens/StandingsScreen';
 import { Placeholder } from './screens/Placeholder';
 import { SignInScreen } from './screens/SignInScreen';
 import { AuthCallback } from './screens/AuthCallback';
@@ -57,18 +58,7 @@ function AppRoutes() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<TodayScreen />} />
-          <Route
-            path="standings"
-            element={
-              <Placeholder
-                title="Standings"
-                icon="ph-bold ph-ranking"
-                color="var(--goal-sweat)"
-                phase="Phase 3"
-                blurb="The live leaderboard — ranked by goal completion only, never raw stats. Tap any player to audit exactly how every point was earned."
-              />
-            }
-          />
+          <Route path="standings" element={<StandingsScreen />} />
           <Route
             path="progress"
             element={

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
 import { localDateRange } from '../../lib/scoring';
 import { weekdayOffset } from '../../lib/dayNav';
+import { BottomSheet } from '../ui/BottomSheet';
 import type { DayClass } from '../../lib/scoring';
 import './MonthSheet.css';
 
@@ -31,9 +31,6 @@ export interface MonthSheetProps {
 
 /** "S M T W T F S" column headers. */
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
-/** px the sheet must be pulled down before release dismisses it. */
-const DISMISS_AFTER = 90;
 
 /** Short-month + year label for a date, parsed at local noon (no tz drift). */
 function monthYear(date: string): { month: string; year: string } {
@@ -91,203 +88,104 @@ export function MonthSheet({
   totalDays,
   isEditable,
 }: MonthSheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const handleRef = useRef<HTMLDivElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
-
-  // How far the sheet is currently dragged down, and whether a drag is active
-  // (suppresses the snap-back transition while the finger is down).
-  const [dragY, setDragY] = useState(0);
-  const [dragging, setDragging] = useState(false);
-
-  // Focus management + Escape-to-close, only while open.
-  useEffect(() => {
-    if (!open) return;
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
-    // Move focus into the sheet (the viewed cell if present, else the sheet).
-    const focusTarget =
-      sheetRef.current?.querySelector<HTMLElement>('[data-focus="true"]') ?? sheetRef.current;
-    focusTarget?.focus();
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    }
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      restoreFocusRef.current?.focus?.();
-    };
-  }, [open, onClose]);
-
-  // Swipe-to-dismiss. Bound natively on the handle (React's delegated pointer
-  // events proved unreliable under mobile emulation); move/up live on `document`
-  // so tracking survives the finger leaving the handle, and `touch-action: none`
-  // on the handle stops the page from scrolling underneath. A real drag is only
-  // recognised past a few px, so a plain tap still fires the grabber's click.
-  useEffect(() => {
-    if (!open) return;
-    setDragY(0);
-    setDragging(false);
-    const handle = handleRef.current;
-    if (!handle) return;
-
-    let startY = 0;
-    let captured = false;
-
-    const onMove = (ev: PointerEvent) => {
-      const dy = ev.clientY - startY;
-      if (dy <= 0) {
-        if (captured) setDragY(0);
-        return; // only track downward drags
-      }
-      if (!captured && dy > 4) {
-        captured = true;
-        setDragging(true);
-      }
-      if (captured) setDragY(dy);
-    };
-    const onUp = (ev: PointerEvent) => {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-      if (!captured) return; // a tap — let the grabber's click handle it
-      setDragging(false);
-      if (ev.clientY - startY > DISMISS_AFTER) onClose();
-      setDragY(0);
-    };
-    const onDown = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      startY = e.clientY;
-      captured = false;
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-      document.addEventListener('pointercancel', onUp);
-    };
-
-    handle.addEventListener('pointerdown', onDown);
-    return () => {
-      handle.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const days = localDateRange(startDate, finalDate);
   const leadingBlanks = weekdayOffset(startDate);
 
   return (
-    <div className="vt-sheet" role="presentation">
-      <div className="vt-sheet__scrim" onClick={onClose} aria-hidden="true" />
-
-      <div
-        className={`vt-sheet__panel${dragging ? ' vt-sheet__panel--dragging' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Jump to a day"
-        ref={sheetRef}
-        tabIndex={-1}
-        style={dragY ? { transform: `translateY(${dragY}px)` } : undefined}
-      >
-        {/* Drag handle: swipe down to dismiss (or tap the grabber to close). */}
-        <div className="vt-sheet__handle" ref={handleRef}>
-          <button type="button" className="vt-sheet__grabber" aria-label="Close" onClick={onClose} />
-
-          <div className="vt-sheet__header">
-            <div className="vt-sheet__month">{rangeLabel(startDate, finalDate)}</div>
-            <div className="vt-sheet__chip">
-              <i className="ph-bold ph-flag-checkered" aria-hidden="true" />
-              Day {dayNumber} of {totalDays}
-            </div>
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      ariaLabel="Jump to a day"
+      handleContent={
+        <div className="vt-sheet__header">
+          <div className="vt-sheet__month">{rangeLabel(startDate, finalDate)}</div>
+          <div className="vt-sheet__chip">
+            <i className="ph-bold ph-flag-checkered" aria-hidden="true" />
+            Day {dayNumber} of {totalDays}
           </div>
         </div>
-
-        <div className="vt-sheet__weekdays" aria-hidden="true">
-          {WEEKDAYS.map((d, i) => (
-            <span key={i}>{d}</span>
-          ))}
-        </div>
-
-        <div className="vt-sheet__grid" role="grid" aria-label="Competition days">
-          {Array.from({ length: leadingBlanks }, (_, i) => (
-            <span key={`blank-${i}`} className="vt-sheet__cell vt-sheet__cell--blank" aria-hidden="true" />
-          ))}
-
-          {days.map((date) => {
-            const isFuture = date > today;
-            const isToday = date === today;
-            const isViewing = date === viewedDate;
-            const editable = isEditable(date);
-            const cls: DayClass = isFuture ? 'nothing' : classByDate[date] ?? 'nothing';
-            const dayNum = Number(date.slice(8, 10));
-
-            const stateLabel = isFuture
-              ? 'upcoming'
-              : cls === 'perfect'
-                ? 'perfect day'
-                : cls === 'active'
-                  ? 'active day'
-                  : cls === 'some'
-                    ? 'some goals logged'
-                    : 'nothing logged';
-            const label = `${fullLabel(date)} — ${stateLabel}${isToday ? ', today' : ''}`;
-
-            // TODAY → base bar; VIEWING → solid ring; editable → dashed ring.
-            // Border precedence (viewing > editable) is handled by CSS order.
-            const classNames = [
-              'vt-sheet__cell',
-              `vt-sheet__cell--${isFuture ? 'future' : cls}`,
-              isToday && 'vt-sheet__cell--today',
-              editable && 'vt-sheet__cell--editable',
-              isViewing && 'vt-sheet__cell--viewing',
-            ]
-              .filter(Boolean)
-              .join(' ');
-
-            if (isFuture) {
-              return (
-                <div key={date} className={classNames} aria-hidden="true">
-                  <span className="vt-sheet__num">{dayNum}</span>
-                </div>
-              );
-            }
-
-            return (
-              <button
-                key={date}
-                type="button"
-                className={classNames}
-                aria-label={label}
-                aria-current={isToday ? 'date' : undefined}
-                data-focus={isViewing ? 'true' : undefined}
-                onClick={() => {
-                  onSelect(date);
-                  onClose();
-                }}
-              >
-                <span className="vt-sheet__num">{dayNum}</span>
-                {cls === 'perfect' && <i className="ph-fill ph-star vt-sheet__star" aria-hidden="true" />}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="vt-sheet__legend">
-          <LegendItem className="vt-sheet__sw--perfect" star>Perfect</LegendItem>
-          <LegendItem className="vt-sheet__sw--active">Active</LegendItem>
-          <LegendItem className="vt-sheet__sw--some">Some goals</LegendItem>
-          <LegendItem className="vt-sheet__sw--nothing">Nothing logged</LegendItem>
-          <LegendItem className="vt-sheet__sw--editable">Editable</LegendItem>
-          <LegendItem className="vt-sheet__sw--today">Today</LegendItem>
-          <LegendItem className="vt-sheet__sw--viewing">Viewing</LegendItem>
-        </div>
+      }
+    >
+      <div className="vt-sheet__weekdays" aria-hidden="true">
+        {WEEKDAYS.map((d, i) => (
+          <span key={i}>{d}</span>
+        ))}
       </div>
-    </div>
+
+      <div className="vt-sheet__grid" role="grid" aria-label="Competition days">
+        {Array.from({ length: leadingBlanks }, (_, i) => (
+          <span key={`blank-${i}`} className="vt-sheet__cell vt-sheet__cell--blank" aria-hidden="true" />
+        ))}
+
+        {days.map((date) => {
+          const isFuture = date > today;
+          const isToday = date === today;
+          const isViewing = date === viewedDate;
+          const editable = isEditable(date);
+          const cls: DayClass = isFuture ? 'nothing' : classByDate[date] ?? 'nothing';
+          const dayNum = Number(date.slice(8, 10));
+
+          const stateLabel = isFuture
+            ? 'upcoming'
+            : cls === 'perfect'
+              ? 'perfect day'
+              : cls === 'active'
+                ? 'active day'
+                : cls === 'some'
+                  ? 'some goals logged'
+                  : 'nothing logged';
+          const label = `${fullLabel(date)} — ${stateLabel}${isToday ? ', today' : ''}`;
+
+          // TODAY → base bar; VIEWING → solid ring; editable → dashed ring.
+          // Border precedence (viewing > editable) is handled by CSS order.
+          const classNames = [
+            'vt-sheet__cell',
+            `vt-sheet__cell--${isFuture ? 'future' : cls}`,
+            isToday && 'vt-sheet__cell--today',
+            editable && 'vt-sheet__cell--editable',
+            isViewing && 'vt-sheet__cell--viewing',
+          ]
+            .filter(Boolean)
+            .join(' ');
+
+          if (isFuture) {
+            return (
+              <div key={date} className={classNames} aria-hidden="true">
+                <span className="vt-sheet__num">{dayNum}</span>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={date}
+              type="button"
+              className={classNames}
+              aria-label={label}
+              aria-current={isToday ? 'date' : undefined}
+              data-focus={isViewing ? 'true' : undefined}
+              onClick={() => {
+                onSelect(date);
+                onClose();
+              }}
+            >
+              <span className="vt-sheet__num">{dayNum}</span>
+              {cls === 'perfect' && <i className="ph-fill ph-star vt-sheet__star" aria-hidden="true" />}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="vt-sheet__legend">
+        <LegendItem className="vt-sheet__sw--perfect" star>Perfect</LegendItem>
+        <LegendItem className="vt-sheet__sw--active">Active</LegendItem>
+        <LegendItem className="vt-sheet__sw--some">Some goals</LegendItem>
+        <LegendItem className="vt-sheet__sw--nothing">Nothing logged</LegendItem>
+        <LegendItem className="vt-sheet__sw--editable">Editable</LegendItem>
+        <LegendItem className="vt-sheet__sw--today">Today</LegendItem>
+        <LegendItem className="vt-sheet__sw--viewing">Viewing</LegendItem>
+      </div>
+    </BottomSheet>
   );
 }
 

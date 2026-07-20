@@ -13,11 +13,16 @@ export { SaveIndicator, type SaveIndicatorProps } from './ui/SaveIndicator';
 export { Wordmark, type WordmarkProps } from './ui/Wordmark';
 export { Mark, type MarkProps, type MarkVariant } from './ui/Mark';
 export { Logo, type LogoProps } from './ui/Logo';
+export { BottomSheet, type BottomSheetProps } from './ui/BottomSheet';
 
 // Day browser
 export { DateNav, type DateNavProps } from './day/DateNav';
 export { DayRecordRow, type DayRecordRowProps } from './day/DayRecordRow';
 export { MonthSheet, type MonthSheetProps } from './day/MonthSheet';
+
+// Leaderboard
+export { LeaderboardRow, type LeaderboardRowProps } from './leaderboard/LeaderboardRow';
+export { BreakdownSheet, type BreakdownSheetProps } from './leaderboard/BreakdownSheet';
 
 // Goals (signature)
 export { GoalRow, type GoalRowProps } from './goals/GoalRow';

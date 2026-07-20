@@ -1,0 +1,102 @@
+/* Day-by-day breakdown sheet content (the transparency view). Sheet shell lives
+   in BottomSheet.css; this styles the header + bar chart + legend. Tokens only.
+   Shows scores per day only — never which goals (Amber's Phase-3 decision). */
+
+.vt-bd__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.vt-bd__name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-extra);
+  font-size: var(--text-2xl);
+  letter-spacing: var(--ls-tight);
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.vt-bd__stats {
+  margin-top: 3px;
+  font-family: var(--font-body);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* Bar chart — one bar per competition day, height ∝ goals done. Bars flex to
+   fill the width; a long (30-day) competition scrolls horizontally rather than
+   crushing the bars below a legible width. */
+.vt-bd__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 118px;
+  padding: var(--space-2) 0 0;
+  overflow-x: auto;
+}
+.vt-bd__bar {
+  flex: 1 1 0;
+  min-width: 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+.vt-bd__bar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+}
+.vt-bd__fill {
+  width: 100%;
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  transition: height var(--dur-base) var(--ease-out);
+}
+.vt-bd__fill--perfect { background: var(--gold); }
+.vt-bd__fill--active { background: var(--green-500); }
+.vt-bd__fill--some { background: var(--sand-400); }
+.vt-bd__bar-num {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.vt-bd__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: var(--space-4) 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-secondary);
+}
+.vt-bd__legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.vt-bd__sw {
+  width: 13px;
+  height: 13px;
+  border-radius: var(--radius-xs);
+}
+.vt-bd__sw--perfect { background: var(--gold); }
+.vt-bd__sw--active { background: var(--green-500); }
+.vt-bd__sw--some { background: var(--sand-400); }
+
+.vt-bd__empty {
+  margin: var(--space-4) 0 var(--space-5);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-bd__fill { transition: none; }
+}
