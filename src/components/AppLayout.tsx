@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TabBar, type TabItem } from './ui/TabBar';
+import { Diagnostics } from './Diagnostics';
 import { TodayLogProvider, useTodayLog } from '../lib/useTodayLog';
 import './AppLayout.css';
 
@@ -68,6 +69,7 @@ function AppShell() {
         <Outlet />
       </main>
       <ShellTabBar />
+      <Diagnostics />
     </div>
   );
 }

@@ -19,6 +19,10 @@
    viewport-fit=cover means the safe-area strip is painted from <html>. */
 :root {
   color-scheme: light;
+  /* Mirror the safe-area insets into custom properties so JS diagnostics can
+     read the device's real values (env() isn't otherwise readable in script). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 html {
   background: var(--surface-app);

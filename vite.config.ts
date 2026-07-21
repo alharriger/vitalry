@@ -4,6 +4,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/  (test config lives in vitest.config.ts)
 export default defineConfig({
+  // Build stamp — surfaced in the in-app diagnostics panel so we can tell exactly
+  // which deploy a device is running (Cloudflare sets CF_PAGES_COMMIT_SHA).
+  define: {
+    __BUILD_SHA__: JSON.stringify((process.env.CF_PAGES_COMMIT_SHA || 'local').slice(0, 7)),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString().replace('T', ' ').slice(0, 16) + 'Z'),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -37,7 +43,10 @@ export default defineConfig({
         name: 'Vitalry',
         short_name: 'Vitalry',
         description: 'A group wellness game — win by consistency, not intensity.',
-        theme_color: '#0F4D2E',
+        // Match the app's cream surface (the in-app top strip), not the brand
+        // green — a mismatched manifest theme_color tints the installed PWA's top
+        // chrome differently from the page.
+        theme_color: '#FCF9F3',
         background_color: '#FCF9F3',
         display: 'standalone',
         orientation: 'portrait',
