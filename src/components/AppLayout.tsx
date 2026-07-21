@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { TabBar, type TabItem } from './ui/TabBar';
 import { TodayLogProvider, useTodayLog } from '../lib/useTodayLog';
@@ -55,6 +56,14 @@ function AppShell() {
 
   return (
     <div className={`vt-app${readonly ? ' vt-app--readonly' : ''}`}>
+      {/* Opaque status-bar backdrop, pinned above everything (incl. the sheet
+          scrim). iOS Safari/WebKit re-samples the top strip from page content, so
+          a full-screen scrim animating there flickers the status-bar area. This
+          keeps that strip ONE stable app colour in every state — the same
+          stability Chrome gets from theme-color. Height 0 where there's no inset.
+          Portaled to <body> so it shares the sheet's stacking context and its
+          z-index (200) actually wins over the portaled scrim (100). */}
+      {createPortal(<div className="vt-app__statusbar" aria-hidden="true" />, document.body)}
       <main className="vt-app__screen">
         <Outlet />
       </main>

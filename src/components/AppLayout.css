@@ -45,3 +45,24 @@ body.is-readonly-day { background: var(--surface-tint); transition: background v
   bottom: 0;
   z-index: 10;
 }
+
+/* Opaque backdrop for the status-bar / notch strip (viewport-fit=cover). Pinned
+   at the very top ABOVE the sheet scrim (z 100), so the strip is always one solid
+   app colour and iOS never re-tints it when a full-screen sheet animates. Height
+   collapses to 0 where there's no top inset (desktop / Chrome address-bar UI). */
+.vt-app__statusbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--surface-app);
+  z-index: 200;
+  pointer-events: none;
+  transition: background var(--dur-base) var(--ease-out);
+}
+/* Match the read-only day tint so the strip stays seamless with the column. */
+body.is-readonly-day .vt-app__statusbar { background: var(--surface-tint); }
+@media (prefers-reduced-motion: reduce) {
+  .vt-app__statusbar { transition: none; }
+}
