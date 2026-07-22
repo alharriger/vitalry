@@ -157,26 +157,32 @@ A pitfall without a prevention rule is just a diary entry — don't add those.
   express (e.g. a partial swipe), and settle first.
 - **Status:** Active
 
-## iOS status-bar strip flickers when a full-screen scrim covers the safe-area top
-- **What happened:** Opening/closing any bottom sheet (month picker on Today, breakdown on
-  Standings) flickered the coloring at the very top of the screen on Amber's iPhone — "the color
-  isn't loading at the same time." Three fixes missed because they targeted the wrong layer:
-  `color-scheme: light` + painting the `<html>` canvas (no effect), then `theme-color` cream +
-  portaling the sheet to `<body>` (no effect).
-- **Root cause:** Two things together. (1) The app had **no `env(safe-area-inset-top)` handling** at
-  all (only a 20px `--screen-pad`), so on a notched iPhone the top ~status-bar strip was an
-  undefined region with content sitting under it. (2) The sheet's dark **scrim was `inset: 0` — it
-  covered that strip** and animated its opacity, so iOS recomposited/re-tinted the status-bar
-  backdrop (and can flip its glyph tint) on its own layer each frame, out of step with the rest.
-  The audit that found it: a **Playwright WebKit** (Safari-engine) probe showed html/body/`.vt-app`
-  backgrounds perfectly in sync every frame and the scrim covering the full viewport — proving it
-  was NOT a CSS/DOM desync but an on-device compositing artifact at the safe-area strip (invisible
-  in any headless engine; WebKit doesn't emulate the notch inset).
-- **Prevention rule:** With `viewport-fit=cover`, (a) always pad content for
-  `env(safe-area-inset-top)` so the top strip is a defined app-background region, and (b) never let a
-  full-screen animated overlay cover the status-bar strip — start the scrim at
-  `top: env(safe-area-inset-top, 0px)` so that strip stays a stable app-coloured region (only the
-  content below dims, the standard iOS modal pattern). Reproduce iOS-only paint issues with
-  Playwright **WebKit**, not Chromium; when even WebKit can't show it, suspect a real-device
-  safe-area / status-bar-chrome compositing effect, not a CSS bug.
-- **Status:** Active
+## iOS status-bar flickers when a sheet scrim animates over the top (and env(safe-area-inset-top) is 0)
+- **What happened:** Opening/closing any bottom sheet (month picker, breakdown) flickered the
+  colouring at the very top of the screen on Amber's iPhone — "the colour isn't loading at the same
+  time" — in **both** Safari and the installed PWA. **Five** fixes missed in a row:
+  `color-scheme: light`, painting the `<html>` canvas, `theme-color` cream, portaling the sheet to
+  `<body>`, and padding/insetting by `env(safe-area-inset-top)`.
+- **Why the guesses failed — the rigor lesson:** all the env-based fixes were **silent no-ops**,
+  because on that iPhone **`env(safe-area-inset-top)` reports `0px`** in both Safari and the PWA (the
+  iOS status bar overlaps the top of the web view but is not exposed as an inset). We only learned
+  this after adding an **on-device diagnostics panel** (build stamp + `display-mode` + live
+  `env(safe-area-inset-*)` + service-worker state) and **on-device A/B experiment toggles**. The
+  experiments gave the definitive answer no headless engine could: the flicker is iOS **re-tinting
+  the status bar as the scrim animates over the top strip** — a stable opaque bar over that strip, OR
+  keeping the scrim off it, both stop it; the fade only drives the *open* flicker, the unmount drives
+  *close*, and `color-mix` is irrelevant.
+- **The fix:** reserve a fixed status-bar zone on iOS (`--vt-top-safe: max(env(safe-area-inset-top),
+  56px)` gated by a JS-set `html.is-ios`, since env is 0), pad content below it, and pin an **opaque
+  app-coloured guard** over that strip at `z-index` above the sheet scrim (portaled to `<body>` so its
+  z-index actually wins over the portaled scrim). The strip is then a stable colour in every state, so
+  iOS never re-tints it.
+- **Prevention rule:** (1) Never trust `env(safe-area-inset-top)` to be non-zero on iOS — Safari/PWA
+  can report 0; gate a fixed fallback on detected iOS. (2) You cannot reproduce iOS status-bar /
+  status-chrome effects in Chromium OR headless WebKit — when a device-only bug resists fixes, **stop
+  shipping guesses**: build an on-device diagnostics readout (so you know the exact build + device
+  state, e.g. whether a stale service worker is serving old code) and **on-device A/B toggles** so the
+  user isolates the cause in one pass. Confirm which build the device runs *before* concluding a fix
+  failed.
+- **Status:** Resolved (fix shipped Phase 3); keep the diagnostics/experiments technique for future
+  device-only bugs.

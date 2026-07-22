@@ -1,15 +1,4 @@
 import { useEffect, useState } from 'react';
-import '../styles/experiments.css';
-
-/** On-device A/B experiments for the top-strip flicker (see experiments.css).
- *  Each toggles one class on <html>; Amber flips them one at a time to find
- *  which stops the flicker on her phone. */
-const EXPERIMENTS: { cls: string; label: string }[] = [
-  { cls: 'exp-guard', label: 'A · opaque cream bar over the top' },
-  { cls: 'exp-nofade', label: 'B · no scrim fade animation' },
-  { cls: 'exp-solid', label: 'C · solid scrim (no color-mix)' },
-  { cls: 'exp-below', label: 'D · scrim starts 100px down' },
-];
 
 /**
  * TEMPORARY on-device diagnostics (Phase 3 status-bar debugging).
@@ -53,16 +42,6 @@ function themeColorMeta(): string {
 export function Diagnostics() {
   const [open, setOpen] = useState(false);
   const [insets, setInsets] = useState(readInsets());
-  const [exp, setExp] = useState<string | null>(null);
-
-  // Apply exactly one experiment class to <html> at a time (or none).
-  function chooseExp(cls: string) {
-    const root = document.documentElement;
-    EXPERIMENTS.forEach((e) => root.classList.remove(e.cls));
-    const next = exp === cls ? null : cls;
-    if (next) root.classList.add(next);
-    setExp(next);
-  }
 
   // Re-read insets on resize/orientation (they can change with the URL bar).
   useEffect(() => {
@@ -153,45 +132,8 @@ export function Diagnostics() {
                 ))}
               </tbody>
             </table>
-            <div style={{ marginTop: 14, fontWeight: 800, fontFamily: 'var(--font-display)', fontSize: 15 }}>
-              Flicker experiments
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', margin: '2px 0 8px' }}>
-              Turn ON one at a time, close this, then open/close a breakdown. Tell me
-              which letter (if any) stops the flicker.
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {EXPERIMENTS.map((e) => {
-                const on = exp === e.cls;
-                return (
-                  <button
-                    key={e.cls}
-                    type="button"
-                    onClick={() => chooseExp(e.cls)}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '9px 12px',
-                      borderRadius: 'var(--radius-md)',
-                      border: `1.5px solid ${on ? 'var(--evergreen)' : 'var(--border-subtle)'}`,
-                      background: on ? 'var(--mint-200)' : 'var(--surface-card)',
-                      font: '700 13px/1.2 var(--font-body)',
-                      color: 'var(--text-primary)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span>{e.label}</span>
-                    <span style={{ color: on ? 'var(--evergreen)' : 'var(--text-muted)', fontWeight: 800 }}>
-                      {on ? 'ON' : 'off'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
             <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)' }}>
-              Screenshot the top rows and send them over. Tap outside to close.
+              Screenshot this and send it over. Tap outside to close.
             </div>
           </div>
         </div>

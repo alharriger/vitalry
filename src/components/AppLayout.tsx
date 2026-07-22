@@ -13,6 +13,13 @@ const TABS: TabItem[] = [
   { key: 'group',     label: 'Group',     icon: 'ph-bold ph-users-three' },
 ];
 
+/** iOS (incl. iPadOS masquerading as Mac) — where the status bar overlaps the
+ *  web view but env(safe-area-inset-top) reads 0, so we reserve a fixed zone. */
+function isIOS(): boolean {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
 /**
  * The four-tab app shell: a scrollable screen area with a pinned bottom tab
  * bar. TodayLogProvider wraps the whole shell so Today and the tab bar's
@@ -21,6 +28,11 @@ const TABS: TabItem[] = [
  * layout as full-screen flows.
  */
 export function AppLayout() {
+  // Flag iOS once so CSS can reserve a status-bar zone it otherwise can't detect.
+  useEffect(() => {
+    document.documentElement.classList.toggle('is-ios', isIOS());
+  }, []);
+
   return (
     <TodayLogProvider>
       <AppShell />

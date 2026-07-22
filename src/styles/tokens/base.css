@@ -23,6 +23,18 @@
      read the device's real values (env() isn't otherwise readable in script). */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Reserved top zone for the status bar. Normally the real inset (0 on
+     desktop/Android). */
+  --vt-top-safe: env(safe-area-inset-top, 0px);
+}
+/* iOS Safari/PWA reports safe-area-inset-top = 0 even though its status bar
+   overlaps the top of the web view, so env() can't reserve that space and a
+   full-screen sheet scrim animating over it makes iOS re-tint the status bar
+   (the "top strip flicker"). Reserve a fixed status-bar-height zone on iOS so
+   content clears it AND the opaque top guard can hold that strip a stable
+   colour. Real-notch devices (non-zero inset) still get the larger of the two. */
+html.is-ios {
+  --vt-top-safe: max(env(safe-area-inset-top, 0px), 56px);
 }
 html {
   background: var(--surface-app);

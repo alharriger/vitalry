@@ -14,12 +14,9 @@
 .vt-sheet__scrim {
   position: absolute;
   inset: 0;
-  /* Start the scrim BELOW the status-bar / notch strip. If the dark scrim covers
-     that strip, iOS recomposites the status-bar backdrop (and can flip its glyph
-     tint) each frame the sheet animates — the flicker "at the top". Leaving the
-     safe-area strip untouched keeps it a stable app-coloured region. On devices
-     with no inset (desktop / no notch) this is 0 and the scrim covers all. */
-  top: env(safe-area-inset-top, 0px);
+  /* The opaque status-bar guard (AppLayout, z-index 200) sits above this scrim
+     and holds the top strip a stable colour, so the scrim can safely cover the
+     whole viewport without triggering the iOS status-bar re-tint flicker. */
   background: var(--scrim);
   animation: vt-sheet-fade var(--dur-base) var(--ease-out);
 }

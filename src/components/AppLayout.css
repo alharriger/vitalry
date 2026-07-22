@@ -18,11 +18,9 @@
      behind the column. */
   overscroll-behavior: contain;
   padding: var(--screen-pad);
-  /* Clear the status-bar / notch strip (viewport-fit=cover) so content is never
-     under it and the top strip is a well-defined app-background region — without
-     this the top ~status-bar area is undefined and iOS repaints it out of step
-     with the rest when a full-screen sheet opens/closes (the "top glitch"). */
-  padding-top: calc(var(--screen-pad) + env(safe-area-inset-top, 0px));
+  /* Clear the reserved status-bar zone (see --vt-top-safe) so content is never
+     under the status bar and the opaque top guard has a stable strip to hold. */
+  padding-top: calc(var(--screen-pad) + var(--vt-top-safe));
   /* Leave room so content never hides behind the pinned tab bar. */
   padding-bottom: calc(var(--tabbar-h) + var(--space-6));
 }
@@ -55,7 +53,7 @@ body.is-readonly-day { background: var(--surface-tint); transition: background v
   top: 0;
   left: 0;
   right: 0;
-  height: env(safe-area-inset-top, 0px);
+  height: var(--vt-top-safe);
   background: var(--surface-app);
   z-index: 200;
   pointer-events: none;
